@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="interface" />
+		<Option makefile_is_custom="1" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="all">
+				<Option type="4" />
+				<Option compiler="gcc" />
+				<MakeCommands>
+					<Build command="$make -f $makefile $target" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile $target" />
+					<SilentBuild command="$make -s -f $makefile $target" />
+				</MakeCommands>
+			</Target>
+			<Target title="install">
+				<Option type="4" />
+				<Option compiler="gcc" />
+				<MakeCommands>
+					<Build command="$make -f $makefile $target" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile $target" />
+					<SilentBuild command="$make -s -f $makefile $target" />
+				</MakeCommands>
+			</Target>
+			<Target title="clean">
+				<Option type="4" />
+				<Option compiler="gcc" />
+				<MakeCommands>
+					<Build command="$make -f $makefile $target" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile $target" />
+					<SilentBuild command="$make -s -f $makefile $target" />
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="config/config.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="config/config.h" />
+		<Unit filename="gui/gui.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gui/gui.h" />
+		<Unit filename="gui/gui_skin.h" />
+		<Unit filename="gzip/gzip.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gzip/gzip.h" />
+		<Unit filename="hdd/hdd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="hdd/hdd.h" />
+		<Unit filename="init/init.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="init/init.h" />
+		<Unit filename="paths/paths.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="paths/paths.h" />
+		<Unit filename="settings/settings.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="settings/settings.h" />
+		<Unit filename="tar/tar.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="tar/tar.h" />
+		<Extensions>
+			<code_completion />
+			<envvars set="ps2dev" />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

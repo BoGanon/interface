@@ -4,9 +4,7 @@
 #include <draw.h>
 #include <image.h>
 
-#include <init.h>
-#include <gui_skin.h>
-#include <settings.h>
+#include "gui_skin.h"
 
 typedef struct {
 	int bg;
@@ -33,9 +31,6 @@ extern "C" {
 
 	// Loads image from file and sends to vram
 	void gui_load_image(char *dir, char *file, int texaddr, int clutaddr);
-
-	// Loads the files needed for the GUI
-	void gui_load_files(settings_t *interface, gui_vram_t *vram);
 
 	// Switches the texturebuffer to a specific texture
 	qword_t *gui_setup_texbuffer(qword_t *q,int context, int type, gui_vram_t *vram);

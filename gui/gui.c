@@ -169,26 +169,9 @@ void gui_load_font_ini(char *dir, fsfont_t *font)
 	char path[256];
 
 	strcpy(path,dir);
-	strcat(path,"/");
-	strcat(path,"font.ini");
+	strcat(path,"/font.ini");
 
-	fontstudio_load_ini(font,"mc0:SYS-CONF/font.ini",1024,1024,font->lineheight);
-
-}
-
-void gui_load_files(settings_t *interface, gui_vram_t *vram)
-{
-
-	if (interface == NULL || vram == NULL)
-	{
-		return;
-	}
-
-	gui_load_image(interface->home,"bg.png",vram->bg,0);
-	gui_load_image(interface->home,"skin.png",vram->skin,0);
-	gui_load_image(interface->home,"fg.png",vram->fg,vram->fg_clut);
-	gui_load_image(interface->home,"font.png",vram->font,vram->font_clut);
-	gui_load_font_ini(interface->home,interface->font.fsfont);
+	fontstudio_load_ini(font,path,1024,1024,font->lineheight);
 
 }
 

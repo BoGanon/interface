@@ -13,35 +13,40 @@ config_t *cfg_open(char *path)
 		return NULL;
 	}
 
-	if (path != NULL)
+	if (path == NULL || path[0] == 0)
 	{
-		file = fopen(path,"r");
+		config_init(config);
+		return config;
 	}
+
+	file = fopen(path,"r");
 
 	if (file == NULL)
 	{
 		config_init(config);
+		return config;
 	}
-	else
+
+	// Not initializing produces a crash
+	config_init(config);
+
+	if (config_read(config,file) != CONFIG_TRUE)
 	{
-		if (config_read(config,file) != CONFIG_TRUE)
-		{
 #ifdef DEBUG
-			if (config_error_type(config) == CONFIG_ERR_FILE_IO)
-			{
-				printf("Error opening configuration file.\n");
-			}
-			else
-			{
-				printf("Error parsing configuration file.\n");
-				printf("Line: %d\n", config_error_line(config));
-				printf("Text: %s\n", config_error_text(config));
-			}
-#endif
-			// Destroy the config and initialize a new one
-			config_destroy(config);
-			config_init(config);
+		if (config_error_type(config) == CONFIG_ERR_FILE_IO)
+		{
+			printf("Error opening configuration file.\n");
 		}
+		else
+		{
+			printf("Error parsing configuration file.\n");
+			printf("Line: %d\n", config_error_line(config));
+			printf("Text: %s\n", config_error_text(config));
+		}
+#endif
+		// Destroy the config and initialize a new one
+		config_destroy(config);
+		config_init(config);
 	}
 
 	fclose(file);

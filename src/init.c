@@ -18,6 +18,7 @@
 #include <libpad.h>
 #include <libpwroff.h>
 #include <fileXio_rpc.h>
+#include <audsrv.h>
 
 #include <gs_psm.h>
 #include <draw.h>
@@ -37,18 +38,27 @@
 #include "tar.h"
 #include "gzip.h"
 
+static int __dev9_initialized = 0;
+
 void init_load_erom(void)
 {
 
 	int ret = 0;
 
-	if (SifLoadStartModule("rom0:ADDDRV", 0, NULL, &ret) >= 0);
-	else if (ret < 0)
+	if (SifLoadStartModule("rom0:ADDDRV", 0, NULL, &ret) < 0)
 	{
 #ifdef DEBUG
-		printf("Failed to load start module: ADDDRV\n");
+		printf("Failed to load module: ADDDRV\n");
 #endif
 	}
+
+	if (ret)
+	{
+#ifdef DEBUG
+		printf("Failed to start module: ADDDRV\n");
+#endif
+	}
+
 	if (SifLoadModuleEncrypted("rom1:EROMDRV", 0, NULL) < 0)
 	{
 #ifdef DEBUG
@@ -58,7 +68,6 @@ void init_load_erom(void)
 
 }
 
-#if 0
 void list_loaded_modules(void)
 {
 	char search_name[60];
@@ -77,56 +86,45 @@ void list_loaded_modules(void)
 	}
 
 }
-#endif
 
-int init_load_rom0(void)
+int init_load_bios(module_t *modules, int num)
 {
 
-	int i = 0,old = 0;
-	int result = 0;
+	int i = 0;
+	int ret = 0;
 
 	smod_mod_info_t	mod_t;
 
-	module_t basic_modules[6] = {
-		{ "sio2man", "rom0:XSIO2MAN", 257, NULL, 0 },
-		{ "mcman"  , "rom0:XMCMAN"  , 257, NULL, 0 },
-		{ "mcserv" , "rom0:XMCSERV" , 257, NULL, 0 },
-		{ "mtapman", "rom0:XMTAPMAN",   0, NULL, 0 },
-		{ "padman" , "rom0:XPADMAN" , 276, NULL, 0 },
-		{ "noname",  "rom0:XCDVDMAN",   0, NULL, 0 }
-	};
-
-	// Prevent XCDVDMAN from loading to prevent IOP reboot
-#ifdef DEBUG
-	for (i = 0; i < 5; i++)
-#else
-	for (i = 0; i < 6; i++)
-#endif
+	for (i = 0; i < num; i++)
 	{
-		if (!smod_get_mod_by_name(basic_modules[i].name, &mod_t))
+		if (!smod_get_mod_by_name(modules[i].name, &mod_t))
 		{
-			if ((SifLoadStartModule(basic_modules[i].module, 0, NULL,&result) < 0))
+			if ((SifLoadStartModule(modules[i].module, 0, NULL,&modules[i].result) < 0))
 			{
 #ifdef DEBUG
-				printf("Failed to load module: %s\n", basic_modules[i].module);
+				printf("Failed to load module: %s\n", modules[i].module);
 #endif
-				old = 1;
+				ret = -1;
 			}
-			else if (result)
+
+			if (modules[i].result)
 			{
 #ifdef DEBUG
-				printf("Failed to load module: %s\n", basic_modules[i].module);
+				printf("Failed to start module: %s\n", modules[i].module);
 #endif
-				old = 1;
+				ret = -2;
 			}
 		}
-		else if (mod_t.version == basic_modules[i].old_version )
+		else
 		{
-			old = 1;
+#ifdef DEBUG
+			printf("Possible module conflict\n");
+#endif
+			ret = -3;
 		}
 	}
 
-	return old;
+	return ret;
 
 }
 
@@ -173,21 +171,38 @@ int init_load_irx(const char *dir, module_t *modules, int num)
 			if (get_file_from_tar(tar,size,modules[i].module, &module, &module_size) < 0)
 			{
 #ifdef DEBUG
-				printf("Failed to load module: %s\n", modules[i].module);
+				printf("Failed to find module: %s\n", modules[i].module);
 #endif
 				free(tar);
+				modules[i].result = -1;
 				return -1;
 			}
 
-			if (SifExecModuleBuffer(module, module_size,modules[i].length, modules[i].args, &ret) >= 0);
-			else if (ret < 0)
+			if (SifExecModuleBuffer(module, module_size,modules[i].arglen, modules[i].args, &modules[i].result) < 0)
 			{
 #ifdef DEBUG
 				printf("Failed to load module: %s\n", modules[i].module);
 #endif
 				free(tar);
-				return -1;
+				modules[i].result = -2;
+				return -2;
 			}
+
+			if (modules[i].result)
+			{
+				printf("Failed to start module: %s\n", modules[i].module);
+				free(tar);
+				return -3;
+			}
+
+		}
+		else
+		{
+#ifdef DEBUG
+			printf("Possible module conflict\n");
+#endif
+			free(tar);
+			return -4;
 		}
 	}
 
@@ -202,82 +217,7 @@ void init_sbv_patches()
 	sbv_patch_disable_prefix_check();
 }
 
-void init_draw_env(int x, int y, int width, int height, int fbp, int mode)
-{
-
-	packet_t *packet = packet_init(20,PACKET_NORMAL);
-
-	qword_t *q = packet->data;
-
-	framebuffer_t frame;
-	zbuffer_t z;
-
-	frame.width = width;
-	frame.height = height;
-	frame.psm = GS_PSM_16S;
-	frame.mask = 0;
-	frame.address = fbp;
-
-	z.enable = 0;
-	z.method = ZTEST_METHOD_GREATER;
-	z.address = 0;
-	z.mask = 1;
-	z.zsm = 0;
-
-	switch (mode)
-	{
-		case GRAPH_MODE_AUTO:
-		{
-			mode = graph_get_region();
-		}
-		case GRAPH_MODE_NTSC:
-		case GRAPH_MODE_PAL:
-		{
-			graph_set_mode(GRAPH_MODE_INTERLACED,mode,GRAPH_MODE_FIELD,GRAPH_ENABLE);
-			break;
-		}
-		default:
-		{
-			graph_set_mode(GRAPH_MODE_NONINTERLACED,mode,GRAPH_MODE_FRAME,GRAPH_DISABLE);
-			break;
-		}
-	}
-
-	graph_set_screen(x,y,width,height);
-	graph_set_bgcolor(0,0,0);
-
-	switch (mode)
-	{
-		case GRAPH_MODE_AUTO:
-		case GRAPH_MODE_NTSC:
-		case GRAPH_MODE_PAL:
-		{
-			graph_set_framebuffer_filtered(frame.address,width,frame.psm,0,0);
-			break;
-		}
-		default:
-		{
-			graph_set_framebuffer(0,frame.address,width,frame.psm,0,0);
-			break;
-		}
-	}
-	
-
-	graph_enable_output();
-
-	q = draw_setup_environment(q,0,&frame,&z);
-	q = draw_dithering(q,DRAW_ENABLE);
-
-	q = draw_finish(q);
-
-	dma_channel_send_normal(DMA_CHANNEL_GIF,packet->data, q - packet->data, 0,0);
-	dma_wait_fast();
-
-	packet_free(packet);
-
-}
-
-void init_bios_modules(void)
+void init_iop(void)
 {
 
 	SifInitRpc(0);
@@ -286,9 +226,28 @@ void init_bios_modules(void)
 
 	SifIopReboot("rom0:EELOADCNF");
 
-	// Load modules from bios
-	init_load_erom();
-	init_load_rom0();
+#ifndef V0_PS2
+	init_x_bios_modules();
+#else
+	init_bios_modules();
+#endif
+
+}
+
+void init_x_bios_modules()
+{
+
+	module_t basic_modules[6] =
+	{
+		{ "sio2man"   , "rom0:XSIO2MAN", NULL, 0, 0 },
+		{ "mcman_cex" , "rom0:XMCMAN"  , NULL, 0, 0 },
+		{ "mcserv"    , "rom0:XMCSERV" , NULL, 0, 0 },
+		{ "mtapman"   , "rom0:XMTAPMAN", NULL, 0, 0 },
+		{ "padman"    , "rom0:XPADMAN" , NULL, 0, 0 },
+		{ "noname"    , "rom0:XCDVDMAN", NULL, 0, 0 }
+	};
+
+	init_load_bios(basic_modules,6);
 
 	// Init various libraries
 	mcInit(MC_TYPE_XMC);
@@ -301,86 +260,129 @@ void init_bios_modules(void)
 
 }
 
-void init_basic_modules(const char *dir)
+void init_bios_modules()
 {
 
-	module_t basic_modules[4] =
+	module_t basic_modules[8] =
+	{
+		{ "sio2man"        , "rom0:SIO2MAN", NULL, 0, 0 },
+		{ "mcman"          , "rom0:MCMAN"  , NULL, 0, 0 },
+		{ "mcserv"         , "rom0:MCSERV" , NULL, 0, 0 },
+		{ "mtapman"        , "rom0:MTAPMAN", NULL, 0, 0 },
+		{ "padman"         , "rom0:PADMAN" , NULL, 0, 0 },
+		{ "noname"         , "rom0:CDVDMAN", NULL, 0, 0 },
+		{ "IO/File_Manager", "rom0:IOMAN"  , NULL, 0, 0 },
+		{ "FILEIO_service" , "rom0:FILEIO" , NULL, 0, 0 }
+	};
+
+	init_load_bios(basic_modules,7);
+
+	// Init various libraries
+	mcInit(MC_TYPE_MC);
+	padInit(0);
+
+}
+
+void init_x_irx_modules(const char *dir)
+{
+
+	module_t basic_modules[2] =
 	{
 		{
 			"IOX/File_Manager",
 			"iomanX.irx",
-			0,
 			NULL,
+			0,
 			0
 		},
 		{
 			"IOX/File_Manager_Rpc",
 			"fileXio.irx",
-			0,
 			NULL,
+			0,
 			0
 		},
+
+	};
+
+	init_load_irx(dir,basic_modules,2);
+
+	if (!basic_modules[1].result)
+	{
+		fileXioInit();
+	}
+	else
+	{
+		fioInit();
+	}
+
+}
+
+void init_dev9_irx_modules(const char *dir)
+{
+
+	module_t dev9_modules[2] =
+	{
 		{
 			"Poweroff_Handler",
 			"poweroff.irx",
-			0,
 			NULL,
+			0,
 			0
 		},
 		{
 			"dev9_driver",
 			"ps2dev9.irx",
-			0,
 			NULL,
+			0,
 			0
 		}
 	};
 
-	init_load_irx(dir,basic_modules,4);
+	init_load_irx(dir,dev9_modules,2);
 
+	// Return if the poweroff module failed
+	if (dev9_modules[0].result)
+	{
+		return;
+	}
+
+	//
+	if (!dev9_modules[1].result)
+	{
+		__dev9_initialized = 1;
+	}
 	poweroffInit();
-	fileXioInit();
 
 }
 
 void init_usb_modules(const char *dir)
 {
 
-	static int __initialized = 0;
-
 	module_t usb_modules[2] =
 	{
 		{
 			"usbd",
 			"usbd.irx",
-			0,
 			NULL,
+			0,
 			0
 		},
 		{
 			"usb_mass",
 			"usbhdfsd.irx",
-			0,
 			NULL,
+			0,
 			0
 		}
 	};
 
-	if (__initialized)
-	{
-		return;
-	}
-
 	init_load_irx(dir,usb_modules,2);
-
-	__initialized = 1;
 
 }
 
 void init_hdd_modules(const char *dir)
 {
-
-	static int __initialized = 0;
 
 	static char hddarg[] = "-o" "\0" "4" "\0" "-n" "\0" "20";
 	static char pfsarg[] = "-m" "\0" "4" "\0" "-o" "\0" "10" "\0" "-n" "\0" "40";
@@ -390,33 +392,58 @@ void init_hdd_modules(const char *dir)
 		{
 			"atad",
 			"ps2atad.irx",
-			0,
 			NULL,
+			0,
 			0
 		},
 		{
 			"hdd_driver",
 			"ps2hdd.irx",
-			0,
 			hddarg,
-			sizeof(hddarg)
+			sizeof(hddarg),
+			0
 		},
 		{
 			"pfs_driver",
 			"ps2fs.irx",
-			0,
 			pfsarg,
-			sizeof(pfsarg)
+			sizeof(pfsarg),
+			0
 		}
 	};
 
-	if (__initialized)
+	if (!__dev9_initialized)
 	{
 		return;
 	}
 
 	init_load_irx(dir,hdd_modules,3);
 
-	__initialized = 1;
+}
 
+void init_sound_modules(const char *dir)
+{
+
+	module_t libsd_module =
+	{
+		"libsd",
+		"rom0:LIBSD",
+		NULL,
+		0,
+		0
+	};
+
+	module_t audsrv_module =
+	{
+		"audsrv",
+		"audsrv.irx",
+		NULL,
+		0,
+		0
+	};
+
+	init_load_bios(&libsd_module,1);
+	init_load_irx(dir,&audsrv_module,1);
+
+	audsrv_init();
 }

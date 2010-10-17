@@ -263,12 +263,11 @@ void init_x_bios_modules()
 void init_bios_modules()
 {
 
-	module_t basic_modules[8] =
+	module_t basic_modules[7] =
 	{
 		{ "sio2man"        , "rom0:SIO2MAN", NULL, 0, 0 },
 		{ "mcman"          , "rom0:MCMAN"  , NULL, 0, 0 },
 		{ "mcserv"         , "rom0:MCSERV" , NULL, 0, 0 },
-		{ "mtapman"        , "rom0:MTAPMAN", NULL, 0, 0 },
 		{ "padman"         , "rom0:PADMAN" , NULL, 0, 0 },
 		{ "noname"         , "rom0:CDVDMAN", NULL, 0, 0 },
 		{ "IO/File_Manager", "rom0:IOMAN"  , NULL, 0, 0 },

@@ -222,9 +222,9 @@ void init_iop(void)
 
 	SifInitRpc(0);
 
-	init_sbv_patches();
+	SifIopReboot(NULL);
 
-	SifIopReboot("rom0:EELOADCNF");
+	init_sbv_patches();
 
 #ifndef V0_PS2
 	init_x_bios_modules();
@@ -423,26 +423,25 @@ void init_hdd_modules(const char *dir)
 void init_sound_modules(const char *dir)
 {
 
-	module_t libsd_module =
+	module_t sound_modules[2] =
 	{
-		"libsd",
-		"rom0:LIBSD",
-		NULL,
-		0,
-		0
+		{
+			"freesd",
+			"freesd.irx",
+			NULL,
+			0,
+			0
+		},
+		{
+			"audsrv",
+			"audsrv.irx",
+			NULL,
+			0,
+			0
+		}
 	};
 
-	module_t audsrv_module =
-	{
-		"audsrv",
-		"audsrv.irx",
-		NULL,
-		0,
-		0
-	};
-
-	init_load_bios(&libsd_module,1);
-	init_load_irx(dir,&audsrv_module,1);
+	init_load_irx(dir,sound_modules,2);
 
 	audsrv_init();
 }

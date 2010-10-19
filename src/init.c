@@ -1,3 +1,5 @@
+#include <kernel.h>
+
 // Module related
 #include <smem.h>
 #include <smod.h>
@@ -42,7 +44,6 @@ static int __dev9_initialized = 0;
 
 void init_load_erom(void)
 {
-
 	int ret = 0;
 
 	if (SifLoadStartModule("rom0:ADDDRV", 0, NULL, &ret) < 0)
@@ -214,40 +215,89 @@ int init_load_irx(const char *dir, module_t *modules, int num)
 void init_sbv_patches()
 {
 	sbv_patch_enable_lmb();
+
+	// Needed for loading ELFS from memory card
 	sbv_patch_disable_prefix_check();
+}
+
+unsigned short int detect_bios_version(void)
+{
+
+	int fd;
+	char romver_buffer[5];
+
+	fd=fioOpen("rom0:ROMVER", O_RDONLY);
+
+	// Read the PS2's BIOS version from rom0:ROMVER.
+	fioRead(fd, romver_buffer, 4);
+
+	fioClose(fd);
+
+	// Null terminate the string.
+	romver_buffer[4]='\0';
+
+	// Return the PS2's BIOS version.
+	return(strtoul(romver_buffer, NULL, 16));
 }
 
 void init_iop(void)
 {
+	static unsigned short int __bios_version = 0;
 
+	// Needed to initialize the SIF dma channel for the reset packet
 	SifInitRpc(0);
 
-	SifIopReboot(NULL);
+	// Reset the IOP to prevent a possible failure in file I/O when an incompatible FILEIO module is being used.
+	SifIopReset(NULL, 0);
+	while(!SifIopSync());
+
+	// Initialize all SIF-services on the EE side (These functions will link up with their corresponding RPCs on the IOP).
+
+	// Initialize the SIF RPC.
+	SifInitRpc(0);
+
+	FlushCache(0);
+	FlushCache(2);
+
+	// Attempt to automatically determine the PS2's BIOS version.
+	__bios_version=detect_bios_version();
+
+	if(__bios_version > 0x0100)
+	{
+		// Note: This will load XCDVDMAN from rom0: !!
+		SifIopReboot("rom0:EELOADCNF");
+	}
+	else
+	{
+		// This will load rom0:CDVDMAN. Hence, multitap support will not be available.
+		SifIopReboot(NULL);
+	}
 
 	init_sbv_patches();
 
-#ifndef V0_PS2
-	init_x_bios_modules();
-#else
-	init_bios_modules();
-#endif
-
+	if(__bios_version > 0x0100)
+	{
+		init_x_bios_modules();
+	}
+	else
+	{
+		init_bios_modules();
+	}
 }
 
 void init_x_bios_modules()
 {
 
-	module_t basic_modules[6] =
+	static module_t basic_modules[5] =
 	{
 		{ "sio2man"   , "rom0:XSIO2MAN", NULL, 0, 0 },
 		{ "mcman_cex" , "rom0:XMCMAN"  , NULL, 0, 0 },
 		{ "mcserv"    , "rom0:XMCSERV" , NULL, 0, 0 },
 		{ "mtapman"   , "rom0:XMTAPMAN", NULL, 0, 0 },
 		{ "padman"    , "rom0:XPADMAN" , NULL, 0, 0 },
-		{ "noname"    , "rom0:XCDVDMAN", NULL, 0, 0 }
 	};
 
-	init_load_bios(basic_modules,6);
+	init_load_bios(basic_modules, 5);
 
 	// Init various libraries
 	mcInit(MC_TYPE_XMC);
@@ -257,29 +307,23 @@ void init_x_bios_modules()
 
 	mtapPortOpen(0);
 	mtapPortOpen(1);
-
 }
 
 void init_bios_modules()
 {
-
-	module_t basic_modules[7] =
+	static module_t basic_modules[4] =
 	{
 		{ "sio2man"        , "rom0:SIO2MAN", NULL, 0, 0 },
 		{ "mcman"          , "rom0:MCMAN"  , NULL, 0, 0 },
 		{ "mcserv"         , "rom0:MCSERV" , NULL, 0, 0 },
 		{ "padman"         , "rom0:PADMAN" , NULL, 0, 0 },
-		{ "noname"         , "rom0:CDVDMAN", NULL, 0, 0 },
-		{ "IO/File_Manager", "rom0:IOMAN"  , NULL, 0, 0 },
-		{ "FILEIO_service" , "rom0:FILEIO" , NULL, 0, 0 }
 	};
 
-	init_load_bios(basic_modules,7);
+	init_load_bios(basic_modules, 4);
 
 	// Init various libraries
 	mcInit(MC_TYPE_MC);
 	padInit(0);
-
 }
 
 void init_x_irx_modules(const char *dir)
@@ -346,7 +390,6 @@ void init_dev9_irx_modules(const char *dir)
 		return;
 	}
 
-	//
 	if (!dev9_modules[1].result)
 	{
 		__dev9_initialized = 1;

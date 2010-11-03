@@ -105,6 +105,20 @@ int config_get_int(config_t *config, char *setting, int initial)
 	}
 }
 
+int config_get_int_element(config_t *config, char *setting, int element, int initial)
+{
+	config_setting_t *config_setting = config_lookup(config,setting);
+
+	if (config_setting == NULL)
+	{
+		return initial;
+	}
+	else
+	{
+		return config_setting_get_int_elem(config_setting,element);
+	}
+}
+
 const char *config_get_string(config_t *config, char *setting, char *initial)
 {
 	const char *value;

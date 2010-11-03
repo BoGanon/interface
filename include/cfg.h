@@ -19,13 +19,15 @@ extern "C" {
 	unsigned char config_get_bool(config_t *config, char *setting, unsigned char initial);
 	unsigned int config_get_uint(config_t *config, char *setting, unsigned int initial);
 	int config_get_int(config_t *config, char *setting, int initial);
+	int config_get_int_elem(config_t *config, char *setting, int element, int initial);
 	const char *config_get_string(config_t *config, char *setting, char *initial);
 
-	#define cfg_lookup(A)       config_lookup(config,A)
-	#define cfg_get_bool(A,B)   config_get_bool(config,A,B)
-	#define cfg_get_uint(A,B)   config_get_uint(config,A,B)
-	#define cfg_get_int(A,B)    config_get_int(config,A,B)
-	#define cfg_get_string(A,B) config_get_string(config,A,B)
+	#define cfg_lookup(A)           config_lookup(config,A)
+	#define cfg_get_bool(A,B)       config_get_bool(config,A,B)
+	#define cfg_get_uint(A,B)       config_get_uint(config,A,B)
+	#define cfg_get_int(A,B)        config_get_int(config,A,B)
+	#define cfg_get_int_elem(A,B,C) config_get_int_elem(config,A,B,C);
+	#define cfg_get_string(A,B)     config_get_string(config,A,B)
 
 #ifdef __cplusplus
 };

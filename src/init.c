@@ -45,6 +45,10 @@ static int __dev9_initialized = 0;
 void init_load_erom(void)
 {
 	int ret = 0;
+	int pos = 0;
+
+	char MG_Region[10];
+	char eromdrv[15];
 
 	if (SifLoadStartModule("rom0:ADDDRV", 0, NULL, &ret) < 0)
 	{
@@ -60,11 +64,25 @@ void init_load_erom(void)
 #endif
 	}
 
-	if (SifLoadModuleEncrypted("rom1:EROMDRV", 0, NULL) < 0)
+	strcpy(MG_region, "ACEJMORU");
+	strcpy(eromdrv,"rom1:EROMDRVA");
+
+	pos = strlen(module)-1;
+
+	for (i = 0; i < 9; i++)
 	{
+		eromdrv[pos] = MG_region[i];
+	
+		if (SifLoadModuleEncrypted(eromdrv, 0, NULL) < 0)
+		{
 #ifdef DEBUG
-		printf("Failed to load encrypted module: EROMDRV\n");
+			printf("Failed to load encrypted module: EROMDRV\n");
 #endif
+		}
+		else
+		{
+			break;
+		}
 	}
 
 }

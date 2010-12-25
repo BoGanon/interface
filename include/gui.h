@@ -3,6 +3,7 @@
 
 #include <draw.h>
 #include <image.h>
+#include <font.h>
 
 #include "gui_skin.h"
 
@@ -32,22 +33,25 @@ extern "C" {
 	// Loads image from file and sends to vram
 	void gui_load_image(char *dir, char *file, int texaddr, int clutaddr);
 
+	// Loads font ini
+	void gui_load_font_ini(char *dir, fsfont_t *font);
+
 	// Switches the texturebuffer to a specific texture
-	qword_t *gui_setup_texbuffer(qword_t *q,int context, int type, gui_vram_t *vram);
+	qword_t *gui_setup_texbuffer(qword_t *q, int type, gui_vram_t *vram);
 
 	// Renders GUI elements
-	qword_t *gui_background(qword_t *q, int context);
-	qword_t *gui_header(qword_t *q,int context, float width, unsigned char alpha);
-	qword_t *gui_footer(qword_t *q,int context, float y, float width, unsigned char alpha);
-	qword_t *gui_box(qword_t *q, int context, float x, float y, int width, int height, int active);
-	qword_t *gui_button(qword_t *q, int context, float x, float y, float button, int active);
-	qword_t *gui_icon(qword_t *q, int context, float x, float y, float type, color_t *color);
-	qword_t *gui_foreground(qword_t *q, int context, unsigned char alpha);
-	qword_t *gui_logo(qword_t *q, int context, float x, float y, unsigned char alpha);
-	qword_t *gui_button_string(qword_t *q, int context, float x, float y, char *str, fsfont_t *font, unsigned char active);
+	qword_t *gui_background(qword_t *q);
+	qword_t *gui_header(qword_t *q, float width, unsigned char alpha);
+	qword_t *gui_footer(qword_t *q, float y, float width, unsigned char alpha);
+	qword_t *gui_box(qword_t *q, float x, float y, int width, int height, int active);
+	qword_t *gui_button(qword_t *q, float x, float y, float button, int active);
+	qword_t *gui_icon(qword_t *q, float x, float y, float type, color_t *color);
+	qword_t *gui_foreground(qword_t *q, unsigned char alpha);
+	qword_t *gui_logo(qword_t *q, float x, float y, unsigned char alpha);
+	qword_t *gui_button_string(qword_t *q, float x, float y, char *str, fsfont_t *font, unsigned char active);
 
 	// Renders a basic GUI layout (header/footer/logo)
-	qword_t *gui_basic_layout(qword_t *q, int context, unsigned char alpha);
+	qword_t *gui_basic_layout(qword_t *q, unsigned char alpha);
 
 #ifdef __cplusplus
 };

@@ -91,7 +91,7 @@ void gui_load_image(char *dir, char *file, int texaddr, int clutaddr)
 
 }
 
-qword_t *gui_setup_texbuffer(qword_t *q, int context, int type, gui_vram_t *vram)
+qword_t *gui_setup_texbuffer(qword_t *q, int type, gui_vram_t *vram)
 {
 
 	texbuffer_t tex;
@@ -156,8 +156,8 @@ qword_t *gui_setup_texbuffer(qword_t *q, int context, int type, gui_vram_t *vram
 		}
 	}
 
-	q = draw_texture_sampling(q,context,&lod);
-	q = draw_texturebuffer(q,context,&tex,&clut);
+	q = draw_texture_sampling(q,0,&lod);
+	q = draw_texturebuffer(q,0,&tex,&clut);
 
 	return q;
 
@@ -171,11 +171,11 @@ void gui_load_font_ini(char *dir, fsfont_t *font)
 	strcpy(path,dir);
 	strcat(path,"/font.ini");
 
-	fontstudio_load_ini(font,path,1024,1024,font->lineheight);
+	fontstudio_load_ini(font,path,1024,1024,font->height);
 
 }
 
-qword_t *gui_foreground(qword_t *q, int context, unsigned char alpha)
+qword_t *gui_foreground(qword_t *q, unsigned char alpha)
 {
 
 	texrect_t rect;
@@ -200,13 +200,13 @@ qword_t *gui_foreground(qword_t *q, int context, unsigned char alpha)
 	rect.color.a = alpha;
 	rect.color.q = 1.0f;
 
-	q = draw_rect_textured_strips(q,context,&rect);
+	q = draw_rect_textured_strips(q,0,&rect);
 
 	return q;
 
 }
 
-qword_t *gui_background(qword_t *q, int context)
+qword_t *gui_background(qword_t *q)
 {
 
 	texrect_t rect;
@@ -231,13 +231,13 @@ qword_t *gui_background(qword_t *q, int context)
 	rect.color.a = 0x80;
 	rect.color.q = 1.0f;
 
-	q = draw_rect_textured_strips(q,context,&rect);
+	q = draw_rect_textured_strips(q,0,&rect);
 
 	return q;
 
 }
 
-qword_t *gui_header(qword_t *q,int context, float width, unsigned char alpha)
+qword_t *gui_header(qword_t *q, float width, unsigned char alpha)
 {
 
 	texrect_t rect;
@@ -262,13 +262,13 @@ qword_t *gui_header(qword_t *q,int context, float width, unsigned char alpha)
 	rect.color.a = alpha;
 	rect.color.q = 1.0f;
 
-	q = draw_rect_textured_strips(q,context,&rect);
+	q = draw_rect_textured_strips(q,0,&rect);
 
 	return q;
 
 }
 
-qword_t *gui_footer(qword_t *q, int context, float y, float width, unsigned char alpha)
+qword_t *gui_footer(qword_t *q, float y, float width, unsigned char alpha)
 {
 
 	texrect_t rect;
@@ -293,14 +293,14 @@ qword_t *gui_footer(qword_t *q, int context, float y, float width, unsigned char
 	rect.color.a = alpha;
 	rect.color.q = 1.0f;
 
-	q = draw_rect_textured_strips(q,context,&rect);
+	q = draw_rect_textured_strips(q,0,&rect);
 
 
 	return q;
 
 }
 
-qword_t *gui_logo(qword_t *q, int context, float x, float y, unsigned char alpha)
+qword_t *gui_logo(qword_t *q, float x, float y, unsigned char alpha)
 {
 
 	texrect_t logo;
@@ -325,13 +325,13 @@ qword_t *gui_logo(qword_t *q, int context, float x, float y, unsigned char alpha
 	logo.t1.u = LOGO_U1;
 	logo.t1.v = LOGO_V1;
 
-	q = draw_rect_textured_strips(q,context,&logo);
+	q = draw_rect_textured_strips(q,0,&logo);
 
 	return q;
 
 }
 
-qword_t *gui_box(qword_t *q, int context, float x, float y, int width, int height, int active)
+qword_t *gui_box(qword_t *q, float x, float y, int width, int height, int active)
 {
 
 	int i;
@@ -353,7 +353,7 @@ qword_t *gui_box(qword_t *q, int context, float x, float y, int width, int heigh
 	bg.color.a = 0x40;
 	bg.color.q = 1.0f;
 
-	q = draw_round_rect_filled(q,context,&bg);
+	q = draw_round_rect_filled(q,0,&bg);
 
 	//top left corner
 
@@ -386,7 +386,7 @@ qword_t *gui_box(qword_t *q, int context, float x, float y, int width, int heigh
 	frame.t1.u = BOX_START_U0 + 31.0f;
 	frame.t1.v = BOX_V0 + 31.0f;
 
-	q = draw_rect_textured(q,context,&frame);
+	q = draw_rect_textured(q,0,&frame);
 
 	frame.t0.u += 16.0f;
 	frame.t1.u += 16.0f;
@@ -396,7 +396,7 @@ qword_t *gui_box(qword_t *q, int context, float x, float y, int width, int heigh
 	{
 		frame.v0.x += 32.0f;
 		frame.v1.x += 32.0f;
-		q = draw_rect_textured(q,context,&frame);
+		q = draw_rect_textured(q,0,&frame);
 	}
 
 	//top right corner
@@ -406,7 +406,7 @@ qword_t *gui_box(qword_t *q, int context, float x, float y, int width, int heigh
 	frame.v0.x += 32.0f;
 	frame.v1.x += 32.0f;
 
-	q = draw_rect_textured(q,context,&frame);
+	q = draw_rect_textured(q,0,&frame);
 
 	// right side
 	frame.t0.v += 16.0f;
@@ -416,7 +416,7 @@ qword_t *gui_box(qword_t *q, int context, float x, float y, int width, int heigh
 	{
 		frame.v0.y += 32.0f;
 		frame.v1.y += 32.0f;
-		q = draw_rect_textured(q,context,&frame);
+		q = draw_rect_textured(q,0,&frame);
 	}
 
 	// bottom right corner
@@ -426,7 +426,7 @@ qword_t *gui_box(qword_t *q, int context, float x, float y, int width, int heigh
 	frame.v0.y += 32.0f;
 	frame.v1.y += 32.0f;
 
-	q = draw_rect_textured(q,context,&frame);
+	q = draw_rect_textured(q,0,&frame);
 
 
 	//left side
@@ -446,7 +446,7 @@ qword_t *gui_box(qword_t *q, int context, float x, float y, int width, int heigh
 	{
 		frame.v0.y += 32.0f;
 		frame.v1.y += 32.0f;
-		q = draw_rect_textured(q,context,&frame);
+		q = draw_rect_textured(q,0,&frame);
 	}
 
 	// bottom left corner
@@ -456,7 +456,7 @@ qword_t *gui_box(qword_t *q, int context, float x, float y, int width, int heigh
 	frame.v0.y += 32.0f;
 	frame.v1.y += 32.0f;
 
-	q = draw_rect_textured(q,context,&frame);
+	q = draw_rect_textured(q,0,&frame);
 
 	// bottom
 	frame.t0.u += 16.0f;
@@ -466,13 +466,13 @@ qword_t *gui_box(qword_t *q, int context, float x, float y, int width, int heigh
 	{
 		frame.v0.x += 32.0f;
 		frame.v1.x += 32.0f;
-		q = draw_rect_textured(q,context,&frame);
+		q = draw_rect_textured(q,0,&frame);
 	}
 
 	return q;
 }
 
-qword_t *gui_button(qword_t *q, int context, float x, float y, float button, int active)
+qword_t *gui_button(qword_t *q, float x, float y, float button, int active)
 {
 
 	texrect_t rect;
@@ -507,13 +507,13 @@ qword_t *gui_button(qword_t *q, int context, float x, float y, float button, int
 	rect.color.a = 0x80;
 	rect.color.q = 1.0f;
 
-	q = draw_rect_textured(q,context,&rect);
+	q = draw_rect_textured(q,0,&rect);
 
 	return q;
 
 }
 
-qword_t *gui_button_string(qword_t *q, int context, float x, float y, char *str, fsfont_t *font, unsigned char active)
+qword_t *gui_button_string(qword_t *q, float x, float y, char *str, fsfont_t *font, unsigned char active)
 {
 
 	rect_t rect;
@@ -539,7 +539,7 @@ qword_t *gui_button_string(qword_t *q, int context, float x, float y, char *str,
 	rect.color.q = 1.0f;
 
 
-	q = draw_round_rect_filled(q,context,&rect);
+	q = draw_round_rect_filled(q,0,&rect);
 
 	if (active)
 	{
@@ -561,25 +561,25 @@ qword_t *gui_button_string(qword_t *q, int context, float x, float y, char *str,
 	rect.v1.x += 1.0f;
 	rect.v0.z = 11;
 
-	q = draw_round_rect_outline(q,context,&rect);
+	q = draw_round_rect_outline(q,0,&rect);
 
 	rect.v0.x -= 1.0f;
 	rect.v1.x += 1.0f;
 	rect.v0.z++;
 
-	q = draw_round_rect_outline(q,context,&rect);
+	q = draw_round_rect_outline(q,0,&rect);
 	c0 = rect.color;
 
 	// Adjust the centering point
 	v0.x -= 4;
 	v0.y += 4;
 
-	q = fontstudio_print_string(q,context,str,CENTER_ALIGN,&v0,&c0,font);
+	q = fontstudio_print_string(q,0,str,CENTER_ALIGN,&v0,&c0,font);
 
 	return q;
 
 }
-qword_t *gui_icon(qword_t *q, int context, float x, float y, float type, color_t *color)
+qword_t *gui_icon(qword_t *q, float x, float y, float type, color_t *color)
 {
 
 	texrect_t rect;
@@ -600,18 +600,18 @@ qword_t *gui_icon(qword_t *q, int context, float x, float y, float type, color_t
 
 	rect.color = *color;
 
-	q = draw_rect_textured(q,context,&rect);
+	q = draw_rect_textured(q,0,&rect);
 
 	return q;
 
 }
 
-qword_t *gui_basic_layout(qword_t *q, int context, unsigned char alpha)
+qword_t *gui_basic_layout(qword_t *q, unsigned char alpha)
 {
 
-	q = gui_header(q,context,512.0f,alpha);
-	q = gui_footer(q,context,512.0f-50.0f,512.0f,alpha);
-	q = gui_logo(q,context,256.0f,20.0f,alpha);
+	q = gui_header(q,512.0f,alpha);
+	q = gui_footer(q,512.0f-50.0f,512.0f,alpha);
+	q = gui_logo(q,256.0f,20.0f,alpha);
 
 	return q;
 }

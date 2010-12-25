@@ -13,7 +13,7 @@
 static int fbp[2] = {0,0};
 
 static int vsync_callback = -1;
-static int interlace = 0;
+static int interlacing = 0;
 static int context = 0;
 
 // qwords
@@ -63,7 +63,7 @@ void video_framebuffer_init(int width, int height)
 int video_vsync_handler(void)
 {
 
-	if (!interlace)
+	if (!interlacing)
 	{
 		graph_set_framebuffer(1,fbp[context],frame.width,GS_PSM_16S,0,0);
 	}
@@ -79,7 +79,7 @@ int video_vsync_handler(void)
 
 }
 
-void video_init_screen(int x, int y, int width, int height, int mode)
+void video_init_screen(int x, int y, int width, int height, int interlace, int mode)
 {
 
 	context = 0;
@@ -95,11 +95,23 @@ void video_init_screen(int x, int y, int width, int height, int mode)
 		{
 			if (height < 448)
 			{
-				graph_set_mode(GRAPH_MODE_NONINTERLACED,mode,GRAPH_MODE_FRAME,GRAPH_DISABLE);
+				if (interlace)
+				{
+					interlacing = GRAPH_MODE_INTERLACED;
+				}
+				else
+				{
+					interlacing = GRAPH_MODE_NONINTERLACED;
+				}
+			}
+
+			if (interlacing)
+			{
+				graph_set_mode(GRAPH_MODE_INTERLACED,mode,GRAPH_MODE_FIELD,GRAPH_ENABLE);
 			}
 			else
 			{
-				graph_set_mode(GRAPH_MODE_INTERLACED,mode,GRAPH_MODE_FIELD,GRAPH_ENABLE);
+				graph_set_mode(GRAPH_MODE_NONINTERLACED,mode,GRAPH_MODE_FRAME,GRAPH_DISABLE);
 			}
 			break;
 		}
@@ -118,7 +130,7 @@ void video_init_screen(int x, int y, int width, int height, int mode)
 		case GRAPH_MODE_NTSC:
 		case GRAPH_MODE_PAL:
 		{
-			if (height < 448)
+			if (interlacing)
 			{
 				graph_set_framebuffer(1,fbp[0],width,GS_PSM_16S,0,0);
 			}

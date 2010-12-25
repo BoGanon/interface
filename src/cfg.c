@@ -105,7 +105,7 @@ int config_get_int(config_t *config, char *setting, int initial)
 	}
 }
 
-int config_get_int_element(config_t *config, char *setting, int element, int initial)
+int config_get_int_elem(config_t *config, char *setting, int element, int initial)
 {
 	config_setting_t *config_setting = config_lookup(config,setting);
 

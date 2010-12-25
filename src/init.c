@@ -44,10 +44,11 @@ static int __dev9_initialized = 0;
 
 void init_load_erom(void)
 {
+	int i;
 	int ret = 0;
 	int pos = 0;
 
-	char MG_Region[10];
+	char mg_region[10];
 	char eromdrv[15];
 
 	if (SifLoadStartModule("rom0:ADDDRV", 0, NULL, &ret) < 0)
@@ -64,14 +65,14 @@ void init_load_erom(void)
 #endif
 	}
 
-	strcpy(MG_region, "ACEJMORU");
+	strcpy(mg_region, "ACEJMORU");
 	strcpy(eromdrv,"rom1:EROMDRVA");
 
-	pos = strlen(module)-1;
+	pos = strlen(eromdrv)-1;
 
 	for (i = 0; i < 9; i++)
 	{
-		eromdrv[pos] = MG_region[i];
+		eromdrv[pos] = mg_region[i];
 	
 		if (SifLoadModuleEncrypted(eromdrv, 0, NULL) < 0)
 		{

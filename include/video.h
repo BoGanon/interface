@@ -18,7 +18,7 @@ extern "C" {
 	void video_texbuffer_init(int width, int height, int tex_psm, int clut_psm);
 
 	// Initializes screen and drawing environment and vsync handler (can be reused)
-	void video_init_screen(int x, int y, int width, int height, int mode);
+	void video_init_screen(int x, int y, int width, int height, int interlace, int mode);
 
 	// Initializes the drawing environment
 	void video_init_draw_env(int width, int height);

@@ -57,6 +57,24 @@ config_t *cfg_open(char *path)
 
 }
 
+void cfg_save(char *path, config_t *cfg)
+{
+
+	FILE *file;
+
+	file = fopen(path,"w+");
+
+	if (file == NULL)
+	{
+		return;
+	}
+
+	config_write(cfg,file);
+
+	fclose(file);
+
+}
+
 void cfg_close(config_t *config)
 {
 	config_destroy(config);

@@ -14,6 +14,9 @@ extern "C" {
 	// Closes a configuration
 	void cfg_close(config_t *config);
 
+	// Saves a configuration to path
+	void cfg_save(char *path, config_t *config);
+
 	// Get values from a setting path
 	// Returns initial value if setting isn't present
 	unsigned char config_get_bool(config_t *config, char *setting, unsigned char initial);

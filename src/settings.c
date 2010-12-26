@@ -263,10 +263,10 @@ void settings_add_to_config(settings_t *settings, config_t *config)
 			setting = config_setting_add(group,"CDVD",CONFIG_TYPE_BOOL);
 			config_setting_set_bool(setting,settings->devices.cdvd);
 
-			setting = config_setting_add(subgroup,"Mass",CONFIG_TYPE_BOOL);
+			setting = config_setting_add(group,"Mass",CONFIG_TYPE_BOOL);
 			config_setting_set_bool(setting,settings->devices.mass);
 
-			setting = config_setting_add(subgroup,"HDD",CONFIG_TYPE_BOOL);
+			setting = config_setting_add(group,"HDD",CONFIG_TYPE_BOOL);
 			config_setting_set_bool(setting,settings->devices.hdd);
 
 		}

@@ -53,8 +53,11 @@
 		<Unit filename="include/gzip.h" />
 		<Unit filename="include/hdd.h" />
 		<Unit filename="include/init.h" />
+		<Unit filename="include/lists.h" />
 		<Unit filename="include/paths.h" />
+		<Unit filename="include/settings.h" />
 		<Unit filename="include/tar.h" />
+		<Unit filename="include/video.h" />
 		<Unit filename="src/cfg.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -70,10 +73,19 @@
 		<Unit filename="src/init.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/lists.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/paths.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/settings.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/tar.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/video.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>

@@ -34,11 +34,14 @@
 
 #include <zlib.h>
 
+#include "tar.h"
+#include "gzip.h"
 
 #include "init.h"
 
-#include "tar.h"
-#include "gzip.h"
+// Builtin modules
+extern unsigned char modules_tgz[];
+extern unsigned int  size_modules_tgz;
 
 static int __dev9_initialized = 0;
 
@@ -162,10 +165,18 @@ int init_load_irx(const char *dir, module_t *modules, int num)
 
 	smod_mod_info_t mod_t;
 
-	strcpy(path,dir);
-	strcat(path,"/modules.tgz");
+	if (dir != NULL)
+	{
+		strcpy(path,dir);
+		strcat(path,"/modules.tgz");
 
-	gz = gzip_load_file(path,&size);
+		gz = gzip_load_file(path,&size);
+	}
+	else
+	{
+		gz = modules_tgz;
+		size = size_modules_tgz;
+	}
 
 	if (gz == NULL)
 	{
@@ -259,7 +270,7 @@ unsigned short int detect_bios_version(void)
 	return(strtoul(romver_buffer, NULL, 16));
 }
 
-void init_iop(void)
+void reset_iop(void)
 {
 	static unsigned short int __bios_version = 0;
 
@@ -294,111 +305,55 @@ void init_iop(void)
 
 	init_sbv_patches();
 
-	if(__bios_version > 0x0100)
-	{
-		init_x_bios_modules();
-	}
-	else
-	{
-		init_bios_modules();
-	}
+	init_basic_modules(NULL);
+
 }
 
-void init_x_bios_modules()
+void init_basic_modules(const char *dir)
 {
 
-	static module_t basic_modules[5] =
+	module_t basic_modules[7] =
 	{
-		{ "sio2man"   , "rom0:XSIO2MAN", NULL, 0, 0 },
-		{ "mcman_cex" , "rom0:XMCMAN"  , NULL, 0, 0 },
-		{ "mcserv"    , "rom0:XMCSERV" , NULL, 0, 0 },
-		{ "mtapman"   , "rom0:XMTAPMAN", NULL, 0, 0 },
-		{ "padman"    , "rom0:XPADMAN" , NULL, 0, 0 },
+		{              "sio2man", "freesio2.irx", NULL, 0, 0 },
+		{                "mcman",    "mcman.irx", NULL, 0, 0 },
+		{               "mcserv",   "mcserv.irx", NULL, 0, 0 },
+		{              "mtapman", "freemtap.irx", NULL, 0, 0 },
+		{               "padman",  "freepad.irx", NULL, 0, 0 },
+		{     "IOX/File_Manager",   "iomanX.irx", NULL, 0, 0 },
+		{ "IOX/File_Manager_Rpc",  "fileXio.irx", NULL, 0, 0 },
 	};
 
-	init_load_bios(basic_modules, 5);
+	init_load_irx(dir, basic_modules, 7);
 
 	// Init various libraries
-	mcInit(MC_TYPE_XMC);
+	mcInit(MC_TYPE_MC);
 
 	mtapInit();
+
 	padInit(0);
 
 	mtapPortOpen(0);
 	mtapPortOpen(1);
-}
 
-void init_bios_modules()
-{
-	static module_t basic_modules[4] =
-	{
-		{ "sio2man"        , "rom0:SIO2MAN", NULL, 0, 0 },
-		{ "mcman"          , "rom0:MCMAN"  , NULL, 0, 0 },
-		{ "mcserv"         , "rom0:MCSERV" , NULL, 0, 0 },
-		{ "padman"         , "rom0:PADMAN" , NULL, 0, 0 },
-	};
-
-	init_load_bios(basic_modules, 4);
-
-	// Init various libraries
-	mcInit(MC_TYPE_MC);
-	padInit(0);
-}
-
-void init_x_irx_modules(const char *dir)
-{
-
-	module_t basic_modules[2] =
-	{
-		{
-			"IOX/File_Manager",
-			"iomanX.irx",
-			NULL,
-			0,
-			0
-		},
-		{
-			"IOX/File_Manager_Rpc",
-			"fileXio.irx",
-			NULL,
-			0,
-			0
-		},
-
-	};
-
-	init_load_irx(dir,basic_modules,2);
-
-	if (!basic_modules[1].result)
+	if (!basic_modules[6].result)
 	{
 		fileXioInit();
 	}
 	else
 	{
+		// Problem initializing fileXio modules
 		fioInit();
 	}
 
 }
 
-void init_dev9_irx_modules(const char *dir)
+void init_dev9_modules(const char *dir)
 {
 
 	module_t dev9_modules[2] =
 	{
-		{
-			"Poweroff_Handler",
-			"poweroff.irx",
-			NULL,
-			0,
-			0
-		},
-		{
-			"dev9_driver",
-			"ps2dev9.irx",
-			NULL,
-			0,
-			0
-		}
+		{ "Poweroff_Handler", "poweroff.irx", NULL, 0, 0},
+		{      "dev9_driver",  "ps2dev9.irx", NULL, 0, 0}
 	};
 
 	init_load_irx(dir,dev9_modules,2);
@@ -413,6 +368,7 @@ void init_dev9_irx_modules(const char *dir)
 	{
 		__dev9_initialized = 1;
 	}
+
 	poweroffInit();
 
 }
@@ -422,20 +378,8 @@ void init_usb_modules(const char *dir)
 
 	module_t usb_modules[2] =
 	{
-		{
-			"usbd",
-			"usbd.irx",
-			NULL,
-			0,
-			0
-		},
-		{
-			"usb_mass",
-			"usbhdfsd.irx",
-			NULL,
-			0,
-			0
-		}
+		{     "usbd",     "usbd.irx", NULL, 0, 0 },
+		{ "usb_mass", "usbhdfsd.irx", NULL, 0, 0 }
 	};
 
 	init_load_irx(dir,usb_modules,2);
@@ -450,27 +394,9 @@ void init_hdd_modules(const char *dir)
 
 	module_t hdd_modules[3] =
 	{
-		{
-			"atad",
-			"ps2atad.irx",
-			NULL,
-			0,
-			0
-		},
-		{
-			"hdd_driver",
-			"ps2hdd.irx",
-			hddarg,
-			sizeof(hddarg),
-			0
-		},
-		{
-			"pfs_driver",
-			"ps2fs.irx",
-			pfsarg,
-			sizeof(pfsarg),
-			0
-		}
+		{       "atad", "ps2atad.irx",   NULL,              0, 0 },
+		{ "hdd_driver",  "ps2hdd.irx", hddarg, sizeof(hddarg), 0 },
+		{ "pfs_driver",   "ps2fs.irx", pfsarg, sizeof(pfsarg), 0 }
 	};
 
 	if (!__dev9_initialized)
@@ -487,23 +413,24 @@ void init_sound_modules(const char *dir)
 
 	module_t sound_modules[2] =
 	{
-		{
-			"freesd",
-			"freesd.irx",
-			NULL,
-			0,
-			0
-		},
-		{
-			"audsrv",
-			"audsrv.irx",
-			NULL,
-			0,
-			0
-		}
+		{ "freesd", "freesd.irx", NULL, 0, 0 },
+		{ "audsrv", "audsrv.irx", NULL, 0, 0 }
 	};
 
 	init_load_irx(dir,sound_modules,2);
 
 	audsrv_init();
+}
+
+void init_cdvd_modules(const char *dir)
+{
+
+	module_t cdvd_modules[2] =
+	{
+		{ "SMSUTILS", "SMSUTILS.irx", NULL, 0, 0 },
+		{  "SMSCDVD",  "SMSCDVD.irx", NULL, 0, 0 }
+	};
+
+	init_load_irx(dir,cdvd_modules,2);
+
 }

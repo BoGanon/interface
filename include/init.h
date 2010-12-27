@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
 	// Resets IOP and loads needed bios modules
-	void init_iop(void);
+	void reset_iop(void);
 
 	// Loads modules from bios
 	int init_load_bios(module_t *modules, int num);
@@ -28,14 +28,11 @@ extern "C" {
 	// Loads modules needed for DVDV support
 	void init_load_erom(void);
 
-	// Init basic bios X modules
-	void init_x_bios_modules(void);
-
-	// Init basic bios non-X modules
-	void init_bios_modules(void);
-
 	// Init basic irx modules
-	void init_x_irx_modules(const char *dir);
+	void init_basic_modules(const char *dir);
+
+	// Init dev9 irx modules
+	void init_dev9_modules(const char *dir);
 
 	// Init usb irx modules
 	void init_usb_modules(const char *dir);

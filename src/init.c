@@ -182,8 +182,8 @@ char *init_tgz_to_tar(const char *dir, int *tar_size)
 		return NULL;
 	}
 
-	tar_size = gzip_get_size(gz,gz_size);
-	tar = malloc(tar_size);
+	*tar_size = gzip_get_size(gz,gz_size);
+	tar = malloc(*tar_size);
 
 	if ((ret = gzip_uncompress(gz,tar)) != Z_OK)
 	{

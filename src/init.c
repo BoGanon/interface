@@ -151,49 +151,73 @@ int init_load_bios(module_t *modules, int num)
 
 }
 
-int init_load_irx(const char *dir, module_t *modules, int num)
+char *init_tgz_to_tar(const char *dir, int *tar_size)
 {
 
 	char path[256];
-	int i,size,ret = 0;
 
 	char *gz = NULL;
-	char *tar;
+	char *tar = NULL;
 
-	char *module;
-	int module_size;
-
-	smod_mod_info_t mod_t;
+	int ret;
+	char gz_buffer = 0;
+	int gz_size = 0;
 
 	if (dir != NULL)
 	{
 		strcpy(path,dir);
 		strcat(path,"/modules.tgz");
 
-		gz = gzip_load_file(path,&size);
+		gz = gzip_load_file(path,&gz_size);
 	}
 	else
 	{
+		gz_buffer = 1;
 		gz = modules_tgz;
-		size = size_modules_tgz;
+		gz_size = size_modules_tgz;
 	}
 
 	if (gz == NULL)
 	{
-		return -1;
+		return NULL;
 	}
 
-	size = gzip_get_size(gz,size);
-	tar = malloc(size);
+	tar_size = gzip_get_size(gz,gz_size);
+	tar = malloc(tar_size);
 
 	if ((ret = gzip_uncompress(gz,tar)) != Z_OK)
 	{
-		free(gz);
+		if (!gz_buffer)
+		{
+			free(gz);
+		}
 		free(tar);
-		return -1;
+		return NULL;
 	}
 
-	free(gz);
+	if (!gz_buffer)
+	{
+		free(gz);
+	}
+
+	return tar;
+
+}
+
+int init_load_irx(char *tar, int size, module_t *modules, int num)
+{
+
+	int i;
+
+	char *module;
+	int module_size;
+
+	smod_mod_info_t mod_t;
+
+	if (tar == NULL)
+	{
+		return -1;
+	}
 
 	for(i = 0; i < num; i++)
 	{
@@ -204,7 +228,6 @@ int init_load_irx(const char *dir, module_t *modules, int num)
 #ifdef DEBUG
 				printf("Failed to find module: %s\n", modules[i].module);
 #endif
-				free(tar);
 				modules[i].result = -1;
 				return -1;
 			}
@@ -214,7 +237,6 @@ int init_load_irx(const char *dir, module_t *modules, int num)
 #ifdef DEBUG
 				printf("Failed to load module: %s\n", modules[i].module);
 #endif
-				free(tar);
 				modules[i].result = -2;
 				return -2;
 			}
@@ -222,7 +244,6 @@ int init_load_irx(const char *dir, module_t *modules, int num)
 			if (modules[i].result)
 			{
 				printf("Failed to start module: %s\n", modules[i].module);
-				free(tar);
 				return -3;
 			}
 
@@ -232,12 +253,9 @@ int init_load_irx(const char *dir, module_t *modules, int num)
 #ifdef DEBUG
 			printf("Possible module conflict\n");
 #endif
-			free(tar);
 			return -4;
 		}
 	}
-
-	free(tar);
 
 	return 0;
 }
@@ -305,12 +323,13 @@ void reset_iop(void)
 
 	init_sbv_patches();
 
-	init_basic_modules(NULL);
-
 }
 
 void init_basic_modules(const char *dir)
 {
+
+	char *tar;
+	int tar_size;
 
 	module_t basic_modules[7] =
 	{
@@ -323,7 +342,9 @@ void init_basic_modules(const char *dir)
 		{ "IOX/File_Manager_Rpc",  "fileXio.irx", NULL, 0, 0 },
 	};
 
-	init_load_irx(dir, basic_modules, 7);
+	tar = init_tgz_to_tar(dir,&tar_size);
+
+	init_load_irx(tar, tar_size, basic_modules, 7);
 
 	// Init various libraries
 	mcInit(MC_TYPE_MC);
@@ -345,10 +366,15 @@ void init_basic_modules(const char *dir)
 		fioInit();
 	}
 
+	free(tar);
+
 }
 
 void init_dev9_modules(const char *dir)
 {
+
+	char *tar;
+	int tar_size;
 
 	module_t dev9_modules[2] =
 	{
@@ -356,7 +382,9 @@ void init_dev9_modules(const char *dir)
 		{      "dev9_driver",  "ps2dev9.irx", NULL, 0, 0}
 	};
 
-	init_load_irx(dir,dev9_modules,2);
+	tar = init_tgz_to_tar(dir, &tar_size);
+
+	init_load_irx(tar, tar_size, dev9_modules,2);
 
 	// Return if the poweroff module failed
 	if (dev9_modules[0].result)
@@ -371,10 +399,15 @@ void init_dev9_modules(const char *dir)
 
 	poweroffInit();
 
+	free(tar);
+
 }
 
 void init_usb_modules(const char *dir)
 {
+
+	char *tar;
+	int tar_size;
 
 	module_t usb_modules[2] =
 	{
@@ -382,12 +415,19 @@ void init_usb_modules(const char *dir)
 		{ "usb_mass", "usbhdfsd.irx", NULL, 0, 0 }
 	};
 
-	init_load_irx(dir,usb_modules,2);
+	tar = init_tgz_to_tar(dir, &tar_size);
+
+	init_load_irx(tar, tar_size,usb_modules,2);
+
+	free(tar);
 
 }
 
 void init_hdd_modules(const char *dir)
 {
+
+	char *tar;
+	int tar_size;
 
 	static char hddarg[] = "-o" "\0" "4" "\0" "-n" "\0" "20";
 	static char pfsarg[] = "-m" "\0" "4" "\0" "-o" "\0" "10" "\0" "-n" "\0" "40";
@@ -404,12 +444,19 @@ void init_hdd_modules(const char *dir)
 		return;
 	}
 
-	init_load_irx(dir,hdd_modules,3);
+	tar = init_tgz_to_tar(dir, &tar_size);
+
+	init_load_irx(tar, tar_size, hdd_modules, 3);
+
+	free(tar);
 
 }
 
 void init_sound_modules(const char *dir)
 {
+
+	char *tar;
+	int tar_size;
 
 	module_t sound_modules[2] =
 	{
@@ -417,13 +464,21 @@ void init_sound_modules(const char *dir)
 		{ "audsrv", "audsrv.irx", NULL, 0, 0 }
 	};
 
-	init_load_irx(dir,sound_modules,2);
+	tar = init_tgz_to_tar(dir, &tar_size);
+
+	init_load_irx(tar, tar_size, sound_modules, 2);
 
 	audsrv_init();
+
+	free(tar);
+
 }
 
 void init_cdvd_modules(const char *dir)
 {
+
+	char *tar;
+	int tar_size;
 
 	module_t cdvd_modules[2] =
 	{
@@ -431,6 +486,9 @@ void init_cdvd_modules(const char *dir)
 		{  "SMSCDVD",  "SMSCDVD.irx", NULL, 0, 0 }
 	};
 
-	init_load_irx(dir,cdvd_modules,2);
+	tar = init_tgz_to_tar(dir, &tar_size);
 
+	init_load_irx(tar, tar_size, cdvd_modules, 2);
+
+	free(tar);
 }

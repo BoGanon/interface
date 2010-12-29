@@ -290,7 +290,7 @@ unsigned short int detect_bios_version(void)
 
 void reset_iop(void)
 {
-	static unsigned short int __bios_version = 0;
+	//static unsigned short int __bios_version = 0;
 
 	// Needed to initialize the SIF dma channel for the reset packet
 	SifInitRpc(0);
@@ -308,18 +308,10 @@ void reset_iop(void)
 	FlushCache(2);
 
 	// Attempt to automatically determine the PS2's BIOS version.
-	__bios_version=detect_bios_version();
+	//__bios_version=detect_bios_version();
 
-	if(__bios_version > 0x0100)
-	{
-		// Note: This will load XCDVDMAN from rom0: !!
-		SifIopReboot("rom0:EELOADCNF");
-	}
-	else
-	{
-		// This will load rom0:CDVDMAN. Hence, multitap support will not be available.
-		SifIopReboot(NULL);
-	}
+	// This will load rom0:CDVDMAN. Hence, multitap support will not be available.
+	SifIopReboot(NULL);
 
 	init_sbv_patches();
 

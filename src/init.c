@@ -290,27 +290,7 @@ unsigned short int detect_bios_version(void)
 
 void reset_iop(void)
 {
-	//static unsigned short int __bios_version = 0;
 
-	// Needed to initialize the SIF dma channel for the reset packet
-	SifInitRpc(0);
-
-	// Reset the IOP to prevent a possible failure in file I/O when an incompatible FILEIO module is being used.
-	SifIopReset(NULL, 0);
-	while(!SifIopSync());
-
-	// Initialize all SIF-services on the EE side (These functions will link up with their corresponding RPCs on the IOP).
-
-	// Initialize the SIF RPC.
-	SifInitRpc(0);
-
-	FlushCache(0);
-	FlushCache(2);
-
-	// Attempt to automatically determine the PS2's BIOS version.
-	//__bios_version=detect_bios_version();
-
-	// This will load rom0:CDVDMAN. Hence, multitap support will not be available.
 	SifIopReboot(NULL);
 
 	init_sbv_patches();

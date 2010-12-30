@@ -68,6 +68,7 @@ int mount_partition(char *path, const char *partition, int mount_point)
 {
 
 	int ret;
+
 	char pfs_path[256] = "pfs0:";
 	char hdd_path[256] = "hdd0:";
 
@@ -120,5 +121,3 @@ int mount_partition(char *path, const char *partition, int mount_point)
 	return -1;
 
 }
-
-

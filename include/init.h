@@ -9,6 +9,9 @@ typedef struct {
 	int result;
 } module_t;
 
+extern unsigned char modules_tgz[];
+extern unsigned int  size_modules_tgz;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -16,7 +19,7 @@ extern "C" {
 	// Resets IOP and loads needed bios modules
 	void reset_iop(void);
 
-	// Uncompresses modules.tgz in directory to uncompressed tar in memory
+	// Returns pointer to uncompressed modules.tar
 	char *init_tgz_to_tar(const char *dir, int *tar_size);
 
 	// Loads modules from bios

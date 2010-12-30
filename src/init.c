@@ -39,10 +39,6 @@
 
 #include "init.h"
 
-// Builtin modules
-extern unsigned char modules_tgz[];
-extern unsigned int  size_modules_tgz;
-
 static int __dev9_initialized = 0;
 
 void init_load_erom(void)
@@ -290,6 +286,9 @@ unsigned short int detect_bios_version(void)
 
 void reset_iop(void)
 {
+
+	// Reset removes dev9 modules
+	__dev9_initialized = 0;
 
 	SifIopReboot(NULL);
 

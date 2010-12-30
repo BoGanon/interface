@@ -22,6 +22,8 @@ gui_vram_t *gui_vram_init(void)
 		return NULL;
 	}
 
+	graph_vram_clear();
+
 	vram->bg = graph_vram_allocate(512,512,GS_PSM_32,GRAPH_ALIGN_BLOCK);
 	vram->fg = graph_vram_allocate(512,512,GS_PSM_8,GRAPH_ALIGN_BLOCK);
 	vram->fg_clut = graph_vram_allocate(16,16,GS_PSM_32,GRAPH_ALIGN_BLOCK);

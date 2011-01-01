@@ -19,14 +19,14 @@ extern "C" {
 	// Resets IOP and loads needed bios modules
 	void reset_iop(void);
 
-	// Returns pointer to uncompressed modules.tar
-	char *init_tgz_to_tar(const char *dir, int *tar_size);
+	// Loads modules.tgz from directory or uses embedded buffer
+	char *init_modules_tgz(const char *dir, int *gz_size);
 
 	// Loads modules from bios
 	int init_load_bios(module_t *modules, int num);
 
 	// Loads irx modules from tar file in memory
-	int init_load_irx(char *tar, int size, module_t *modules, int num);
+	int init_load_irx(char *gz, int gz_size, module_t *modules, int num);
 
 	// Enables the patches needed for module loading
 	void init_sbv_patches(void);

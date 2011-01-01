@@ -22,7 +22,7 @@ settings_t *settings_init(void)
 		return NULL;
 	}
 
-	settings->font.fsfont = (fsfont_t*)calloc(1,sizeof(fsfont_t));
+	settings->font.fsfont = fontstudio_init(16);
 
 	if (settings->font.fsfont == NULL)
 	{
@@ -40,7 +40,7 @@ void settings_free(settings_t* settings)
 {
 	if (settings->font.fsfont != NULL)
 	{
-		fontstudio_unload_ini(settings->font.fsfont);
+		fontstudio_free(settings->font.fsfont);
 		free(settings->font.fsfont);
 	}
 	free(settings);

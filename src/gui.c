@@ -168,12 +168,18 @@ qword_t *gui_setup_texbuffer(qword_t *q, int type, gui_vram_t *vram)
 void gui_load_font_ini(char *dir, fsfont_t *font)
 {
 
+	char *ini;
 	char path[256];
 
-	strcpy(path,dir);
-	strcat(path,"/font.ini");
+	if (dir != NULL)
+	{
+		strcpy(path,dir);
+		strcat(path,"/font.ini");
+	}
 
-	fontstudio_load_ini(font,path,1024,1024,font->height);
+	ini = fontstudio_load_ini(path);
+
+	fontstudio_parse_ini(font,ini,1024,1024);
 
 }
 

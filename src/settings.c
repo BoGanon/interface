@@ -66,6 +66,11 @@ void settings_parse(settings_t *settings, config_t *config)
 	sprintf(setting,"%s%s",section_path,"Mode");
 	settings->display.mode = cfg_get_uint(setting,GRAPH_MODE_AUTO);
 
+	if (settings->display.mode == GRAPH_MODE_AUTO)
+	{
+		settings->display.mode = graph_get_region();
+	}
+
 	sprintf(setting,"%s%s",section_path,"Interlace");
 	settings->display.interlace = cfg_get_bool(setting,0);
 

@@ -63,7 +63,7 @@ void video_framebuffer_init(int width, int height)
 int video_vsync_handler(void)
 {
 
-	if (!interlacing)
+	if (interlacing == GRAPH_MODE_NONINTERLACED)
 	{
 		graph_set_framebuffer(1,fbp[context],frame.width,GS_PSM_16S,0,0);
 	}
@@ -86,31 +86,17 @@ void video_init_screen(int x, int y, int width, int height, int interlace, int m
 
 	switch (mode)
 	{
-		case GRAPH_MODE_AUTO:
-		{
-			mode = graph_get_region();
-		}
 		case GRAPH_MODE_NTSC:
 		case GRAPH_MODE_PAL:
 		{
-			if (height < 448)
+			if (interlace)
 			{
-				if (interlace)
-				{
-					interlacing = GRAPH_MODE_INTERLACED;
-				}
-				else
-				{
-					interlacing = GRAPH_MODE_NONINTERLACED;
-				}
-			}
-
-			if (interlacing)
-			{
+				interlacing = GRAPH_MODE_INTERLACED;
 				graph_set_mode(GRAPH_MODE_INTERLACED,mode,GRAPH_MODE_FIELD,GRAPH_ENABLE);
 			}
 			else
 			{
+				interlacing = GRAPH_MODE_NONINTERLACED;
 				graph_set_mode(GRAPH_MODE_NONINTERLACED,mode,GRAPH_MODE_FRAME,GRAPH_DISABLE);
 			}
 			break;
@@ -203,6 +189,9 @@ void video_init_draw_env(int width, int height)
 	q = draw_setup_environment(q,0,&frame,&z);
 	q = draw_dithering(q,DRAW_ENABLE);
 
+	PACK_GIFTAG(q, GS_SET_PRMODECONT(PRIM_OVERRIDE_ENABLE),GS_REG_PRMODECONT);
+	q++;
+
 	q = draw_finish(q);
 
 	dma_channel_send_normal(DMA_CHANNEL_GIF,packet->data, q - packet->data, 0,0);
@@ -248,6 +237,7 @@ void video_flip_buffer()
 
 	dma_wait_fast();
 	dma_channel_send_normal_ucab(DMA_CHANNEL_GIF,flip_packet->data,flip_q - flip_packet->data, 0);
+	dma_wait_fast();
 
 }
 
@@ -401,5 +391,25 @@ void video_sync_flip()
 		video_flip_buffer();
 
 	}
+
+}
+
+void video_sync_wait()
+{
+
+	graph_wait_vsync();
+
+	if (interlacing == GRAPH_MODE_NONINTERLACED)
+	{
+		graph_set_framebuffer(1,fbp[context],frame.width,GS_PSM_16S,0,0);
+	}
+	else
+	{
+		graph_set_framebuffer_filtered(fbp[context],frame.width,GS_PSM_16S,0,0);
+	}
+
+	context ^= 1;
+
+	video_flip_buffer();
 
 }

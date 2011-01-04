@@ -41,8 +41,11 @@ extern "C" {
 	// Draws the texture
 	void video_draw_texture();
 
-	// Check for vsync event and flip buffers
+	// Check for vsync event and flip buffers after vsync handler
 	void video_sync_flip();
+
+	// Waits for vsync event and flips buffers without vsync handler
+	void video_sync_wait();
 
 #ifdef __cplusplus
 };

@@ -42,8 +42,29 @@ extern "C" {
 	// Draw list
 	qword_t *list_display(qword_t *q, int context, list_t *list, fsfont_t *font);
 
-	// List root devices
-	void list_root(list_t *list);
+	// Enable mass device
+	void list_enable_mass();
+
+	// Enable hdd device
+	void list_enable_hdd();
+
+	// Enable cdfs device
+	void list_enable_cdfs();
+
+	// Disable mass device
+	void list_disable_mass();
+
+	// Disable hdd device
+	void list_disable_hdd();
+
+	// Disable cdfs device
+	void list_disable_cdfs();
+
+	// List root device types
+	void list_device_types(list_t *list);
+
+	// List devices that can be mounted
+	void list_mountable_devices(char *path,list_t *list);
 
 	// List partitions
 	void list_partitions(list_t *list);

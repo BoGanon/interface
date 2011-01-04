@@ -8,6 +8,10 @@
 
 #include "lists.h"
 
+static char mass = 0;
+static char cdfs = 0;
+static char hdd  = 0;
+
 list_t *list_init(int x, int y, int display, size_t size, size_t width)
 {
 	int i;
@@ -141,7 +145,7 @@ qword_t *list_display(qword_t *q, int context, list_t *list, fsfont_t *font)
 	entry = *(list->entries);
 
 	// Make it so selection scrolls forward at 10 entries from bottom
-	if (list->selection >= list->display - 10)
+	if (list->selection > list->display - 10)
 	{
 		entry_start = list->selection - 10;
 	}
@@ -190,55 +194,155 @@ qword_t *list_display(qword_t *q, int context, list_t *list, fsfont_t *font)
 
 }
 
-void list_root(list_t *list)
+void list_enable_mass()
+{
+	mass = 1;
+}
+
+void list_enable_hdd()
+{
+	hdd = 1;
+}
+
+void list_enable_cdfs()
+{
+	cdfs = 1;
+}
+
+void list_disable_mass()
+{
+	mass = 0;
+}
+
+// Enable hdd device
+void list_disable_hdd()
+{
+	hdd = 0;
+}
+
+// Enable cdfs device
+void list_disable_cdfs()
+{
+	cdfs = 0;
+}
+
+void list_device_types(list_t *list)
+{
+
+	//int i;
+	int n = 0;
+
+	//struct fileXioDevice devices[25];
+
+	//fileXioGetDeviceList(devices,25);
+
+	//for (i = 0; i < 25; i++)
+	{
+		//if (!strncmp(devices[i].name,"mc",2))
+		{
+			add_reg_entry(list->entries,"mc",n++);
+		}
+
+		//if (!strncmp(devices[i].name,"mass",4))
+		if (mass)
+		{
+			add_reg_entry(list->entries,"mass",n++);
+		}
+
+		//if (!strncmp(devices[i].name,"cdfs",4))
+		if (cdfs)
+		{
+			add_reg_entry(list->entries,"cdfs",n++);
+		}
+
+		//if (!strncmp(devices[i].name,"hdd",3))
+		if (hdd)
+		{
+			add_reg_entry(list->entries,"hdd",n++);
+		}
+
+	}
+
+	list->num = n;
+
+}
+
+void list_mountable_devices(char *device, list_t *list)
 {
 
 	int i,n = 0;
+
 	iox_stat_t stat;
 
 	char mc_path[6] = "mc0:";
 	char mass_device[8] = "mass0:";
 
-	for (i = 0; i < 2; i++)
+	add_reg_entry(list->entries,"..",n++);
+
+	if (!strcmp(device,"mc"))
 	{
-		mc_path[2] = '0' + i;
-		if(!fileXioGetStat(mc_path,&stat))
+		for (i = 0; i < 2; i++)
 		{
-			add_dir_entry(list->entries,mc_path,n++);
+			mc_path[2] = '0' + i;
+			if(!fileXioGetStat(mc_path,&stat))
+			{
+				add_dir_entry(list->entries,mc_path,n++);
+			}
 		}
+
+		list->num = n;
+
 	}
 
-	// List mass
-	if (!fileXioGetStat("mass:",&stat))
-	{
-		add_dir_entry(list->entries,"mass:",n++);
-	}
-	else
+	if (!strcmp(device,"mass"))
 	{
 		for(i=0; i < 10; i++)
 		{
 
 			mass_device[4] = '0'+i;
 
-			if(!fileXioGetStat(mass_device, &stat))
+			if(!(fileXioGetStat(mass_device, &stat) < 0))
 			{
 				add_dir_entry(list->entries,mass_device,n++);
 			}
+		}
 
+	// Older versions of the module only support "mass:"
+		if (!n)
+		{
+			if (!(fileXioGetStat("mass:",&stat) < 0))
+			{
+				add_dir_entry(list->entries,"mass:",n++);
+			}
+
+		}
+
+		list->num = n;
+
+	}
+
+	if (!strcmp(device,"hdd"))
+	{
+
+		// Checking for "hdd0:" doesn't work, maybe since it's a block device
+		//if (!(fileXioGetStat("hdd0:",&stat) < 0))
+		{
+			list_partitions(list);
 		}
 	}
 
-	if (!fileXioGetStat("hdd0:",&stat))
+	if (!strcmp(device,"cdfs"))
 	{
-		add_dir_entry(list->entries,"hdd0:", n++);
+		if(!(fileXioGetStat("cdfs:",&stat) < 0))
+		{
+			add_dir_entry(list->entries,"cdfs:", n++);
+		}
+
+		list->num = n;
+
 	}
 
-	if(!fileXioGetStat("cdfs:",&stat))
-	{
-		add_dir_entry(list->entries,"cdfs:", n++);
-	}
 
-	list->num = n;
 
 }
 
@@ -270,14 +374,13 @@ void list_partitions(list_t *list)
 	iox_dirent_t hddEnt;
 	int hddFd;
 
-	int n = 0;
+	int n = 1;
 
-	add_reg_entry(list->entries, "..", n++);
+	printf("listing partitions\n");
 
-	// In case the hdd gets hot unplugged
 	if((hddFd=fileXioDopen("hdd0:")) < 0)
 	{
-		list->num = 0;
+		list->num = n;
 		return;
 	}
 

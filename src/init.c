@@ -163,7 +163,7 @@ char *init_modules_tgz(const char *dir, int *gz_size)
 	}
 	else
 	{
-		gz = modules_tgz;
+		gz = (char*)modules_tgz;
 		*gz_size = size_modules_tgz;
 	}
 
@@ -333,7 +333,10 @@ void init_basic_modules(const char *dir)
 		fioInit();
 	}
 
-	free(gz);
+	if (gz != (char*)modules_tgz)
+	{
+		free(gz);
+	}
 
 }
 
@@ -366,7 +369,10 @@ void init_dev9_modules(const char *dir)
 
 	poweroffInit();
 
-	free(gz);
+	if (gz != (char*)modules_tgz)
+	{
+		free(gz);
+	}
 
 }
 
@@ -386,7 +392,10 @@ void init_usb_modules(const char *dir)
 
 	init_load_irx(gz, gz_size, usb_modules, 2);
 
-	free(gz);
+	if (gz != (char*)modules_tgz)
+	{
+		free(gz);
+	}
 
 }
 
@@ -415,7 +424,10 @@ void init_hdd_modules(const char *dir)
 
 	init_load_irx(gz, gz_size, hdd_modules, 3);
 
-	free(gz);
+	if (gz != (char*)modules_tgz)
+	{
+		free(gz);
+	}
 
 }
 
@@ -437,7 +449,10 @@ void init_sound_modules(const char *dir)
 
 	audsrv_init();
 
-	free(gz);
+	if (gz != (char*)modules_tgz)
+	{
+		free(gz);
+	}
 
 }
 
@@ -457,6 +472,9 @@ void init_cdvd_modules(const char *dir)
 
 	init_load_irx(gz, gz_size, cdvd_modules, 2);
 
-	free(gz);
+	if (gz != (char*)modules_tgz)
+	{
+		free(gz);
+	}
 
 }

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <zlib.h>
+
 #include <packet.h>
 #include <dma.h>
 
@@ -11,6 +13,52 @@
 #include <image.h>
 
 #include "gui.h"
+#include "gzip.h"
+#include "tar.h"
+
+float gui_screen_height = 512.0f;
+
+static char bg = 0;
+static char fg = 0;
+
+char gui_background_exists()
+{
+	return bg;
+}
+
+char gui_foreground_exists()
+{
+	return fg;
+}
+
+char *gui_skin_tgz(const char *dir, int *gz_size)
+{
+
+	char path[256];
+
+	char *gz;
+
+	if (dir != NULL)
+	{
+		strcpy(path,dir);
+		strcat(path,"/skin.tgz");
+
+		gz = gzip_load_file(path,gz_size);
+	}
+	else
+	{
+		gz = skin_tgz;
+		*gz_size = size_skin_tgz;
+	}
+
+	if (gz == NULL)
+	{
+		return NULL;
+	}
+
+	return gz;
+
+}
 
 gui_vram_t *gui_vram_init(void)
 {
@@ -22,8 +70,6 @@ gui_vram_t *gui_vram_init(void)
 		return NULL;
 	}
 
-	graph_vram_clear();
-
 	vram->bg = graph_vram_allocate(512,512,GS_PSM_32,GRAPH_ALIGN_BLOCK);
 	vram->fg = graph_vram_allocate(512,512,GS_PSM_8,GRAPH_ALIGN_BLOCK);
 	vram->fg_clut = graph_vram_allocate(16,16,GS_PSM_32,GRAPH_ALIGN_BLOCK);
@@ -31,7 +77,6 @@ gui_vram_t *gui_vram_init(void)
 	vram->skin = graph_vram_allocate(512,128,GS_PSM_32,GRAPH_ALIGN_BLOCK);
 	vram->font = graph_vram_allocate(1024,1024,GS_PSM_4,GRAPH_ALIGN_BLOCK);
 	vram->font_clut = graph_vram_allocate(8,2,GS_PSM_32,GRAPH_ALIGN_BLOCK);
-
 
 	return vram;
 
@@ -41,6 +86,176 @@ void gui_vram_free(gui_vram_t *vram)
 {
 	graph_vram_clear();
 	free(vram);
+}
+
+void gui_load_skin(char *dir, gui_vram_t *vram, fsfont_t *gui_font)
+{
+
+	char *tar;
+	int tar_size;
+
+	char *gz;
+	int gz_size;
+
+	if (vram == NULL || gui_font == NULL)
+	{
+		return;
+	}
+
+	gz = gui_skin_tgz(dir,&gz_size);
+
+	if (gz == NULL)
+	{
+		return;
+	}
+
+	tar_size = gzip_get_size(gz,gz_size);
+
+	tar = malloc(tar_size);
+
+	if (gzip_uncompress(gz,tar) != Z_OK)
+	{
+		free(tar);
+		if (gz != (char*)skin_tgz)
+		{
+			free(gz);
+		}
+		return;
+	}
+
+	if (gui_load_image(tar,tar_size,"bg.png",vram->bg,0) < 0)
+	{
+		bg = 0;
+	}
+	else
+	{
+		bg = 1;
+	}
+
+	if (gui_load_image(tar,tar_size,"skin.png",vram->skin,0) < 0)
+	{
+		free(tar);
+		if (gz != (char*)skin_tgz)
+		{
+			free(gz);
+		}
+		gui_load_skin(NULL,vram,gui_font);
+	}
+
+	if (gui_load_image(tar,tar_size,"fg.png",vram->fg,vram->fg_clut) < 0)
+	{
+		fg = 0;
+	}
+	else
+	{
+		fg = 1;
+	}
+
+	if (gui_load_image(tar,tar_size,"font.png",vram->font,vram->font_clut) < 0)
+	{
+		free(tar);
+		if (gz != (char*)skin_tgz)
+		{
+			free(gz);
+		}
+		gui_load_skin(NULL,vram,gui_font);
+	}
+
+	if (gui_load_font_ini(tar,tar_size,gui_font) < 0)
+	{
+		free(tar);
+		if (gz != (char*)skin_tgz)
+		{
+			free(gz);
+		}
+		gui_load_skin(NULL,vram,gui_font);
+	}
+
+	free(tar);
+
+	if (gz != (char*)skin_tgz)
+	{
+		free(gz);
+	}
+
+}
+
+int gui_load_image(char *tar, int tar_size, char *file, int texaddr, int clutaddr)
+{
+
+	char *png;
+	int png_size;
+
+	image_t *image = NULL;
+
+	if (get_file_from_tar(tar,tar_size,file, &png, &png_size) >= 0)
+	{
+		image = image_load_png_buffer(png);
+	}
+	else
+	{
+		return -1;
+	}
+
+	if (image != NULL)
+	{
+
+		gui_send_image(image,texaddr,clutaddr);
+
+		image_free(image);
+
+	}
+
+	return 0;
+}
+
+int gui_load_font_ini(char *tar, int tar_size, fsfont_t *gui_font)
+{
+
+	char *ini;
+	int ini_size;
+
+	// for loading new fonts
+	if (gui_font->charmap != NULL)
+	{
+		free(gui_font->charmap);
+	}
+
+	if (gui_font->chardata != NULL)
+	{
+		free(gui_font->chardata);
+	}
+
+	if (get_file_from_tar(tar,tar_size,"font.ini", &ini, &ini_size) >= 0)
+	{
+		fontstudio_parse_ini(gui_font,ini,1024,1024);
+	}
+	else
+	{
+		return -1;
+	}
+
+	return 0;
+
+}
+
+fsfont_t *gui_font_init(char *dir, int height)
+{
+
+	fsfont_t *gui_font;
+
+	gui_font = fontstudio_init(height);
+
+	gui_font->charmap = NULL;
+	gui_font->chardata = NULL;
+
+	return gui_font;
+
+}
+
+void gui_font_free(fsfont_t *gui_font)
+{
+	fontstudio_free(gui_font);
 }
 
 void gui_send_image(image_t *image,int texture, int clut)
@@ -67,29 +282,6 @@ void gui_send_image(image_t *image,int texture, int clut)
 	dma_wait_fast();
 
 	packet_free(packet);
-
-}
-
-void gui_load_image(char *dir, char *file, int texaddr, int clutaddr)
-{
-
-	char path[256];
-	image_t *image = NULL;
-
-	strcpy(path,dir);
-	strcat(path,"/");
-	strcat(path,file);
-
-	image = image_load_png_file(path);
-
-	if (image != NULL)
-	{
-
-		gui_send_image(image,texaddr,clutaddr);
-
-		image_free(image);
-
-	}
 
 }
 
@@ -162,24 +354,6 @@ qword_t *gui_setup_texbuffer(qword_t *q, int type, gui_vram_t *vram)
 	q = draw_texturebuffer(q,0,&tex,&clut);
 
 	return q;
-
-}
-
-void gui_load_font_ini(char *dir, fsfont_t *font)
-{
-
-	char *ini;
-	char path[256];
-
-	if (dir != NULL)
-	{
-		strcpy(path,dir);
-		strcat(path,"/font.ini");
-	}
-
-	ini = fontstudio_load_ini(path);
-
-	fontstudio_parse_ini(font,ini,1024,1024);
 
 }
 
@@ -342,9 +516,9 @@ qword_t *gui_logo(qword_t *q, float x, float y, unsigned char alpha)
 qword_t *gui_box(qword_t *q, float x, float y, int width, int height, int active)
 {
 
-	int i;
+	//int i;
+	//texrect_t frame;
 	rect_t bg;
-	texrect_t frame;
 
 	// background
 	bg.v0.x = x + 1.0f;
@@ -361,10 +535,21 @@ qword_t *gui_box(qword_t *q, float x, float y, int width, int height, int active
 	bg.color.a = 0x40;
 	bg.color.q = 1.0f;
 
+	if (active)
+	{
+		draw_enable_blending();
+	}
+	else
+	{
+		draw_disable_blending();
+	}
+
 	q = draw_round_rect_filled(q,0,&bg);
 
-	//top left corner
+	draw_disable_blending();
 
+	//top left corner
+/*
 	frame.v0.x = x;
 	frame.v0.y = y;
 	frame.v0.z = 3;
@@ -436,7 +621,6 @@ qword_t *gui_box(qword_t *q, float x, float y, int width, int height, int active
 
 	q = draw_rect_textured(q,0,&frame);
 
-
 	//left side
 	frame.v0.x = x;
 	frame.v0.y = y;
@@ -476,7 +660,7 @@ qword_t *gui_box(qword_t *q, float x, float y, int width, int height, int active
 		frame.v1.x += 32.0f;
 		q = draw_rect_textured(q,0,&frame);
 	}
-
+*/
 	return q;
 }
 
@@ -487,7 +671,7 @@ qword_t *gui_button(qword_t *q, float x, float y, float button, int active)
 
 	rect.v0.x = x;
 	rect.v0.y = y;
-	rect.v0.z = 2;
+	rect.v0.z = 3;
 
 	rect.v1.x = rect.v0.x + 127.0f;
 	rect.v1.y = rect.v0.y + 31.0f;
@@ -587,6 +771,7 @@ qword_t *gui_button_string(qword_t *q, float x, float y, char *str, fsfont_t *fo
 	return q;
 
 }
+
 qword_t *gui_icon(qword_t *q, float x, float y, float type, color_t *color)
 {
 
@@ -618,7 +803,7 @@ qword_t *gui_basic_layout(qword_t *q, unsigned char alpha)
 {
 
 	q = gui_header(q,512.0f,alpha);
-	q = gui_footer(q,512.0f-50.0f,512.0f,alpha);
+	q = gui_footer(q,gui_screen_height-50.0f,512.0f,alpha);
 	q = gui_logo(q,256.0f,20.0f,alpha);
 
 	return q;

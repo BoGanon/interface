@@ -231,7 +231,9 @@ int init_load_irx(char *gz, int gz_size, module_t *modules, int num)
 
 			if (modules[i].result)
 			{
+#ifdef DEBUG
 				printf("Failed to start module: %s\n", modules[i].module);
+#endif
 				free(tar);
 				return -3;
 			}
@@ -306,7 +308,7 @@ void init_basic_modules(const char *dir)
 		{              "mtapman", "freemtap.irx", NULL, 0, 0 },
 		{               "padman",  "freepad.irx", NULL, 0, 0 },
 		{     "IOX/File_Manager",   "iomanX.irx", NULL, 0, 0 },
-		{ "IOX/File_Manager_Rpc",  "fileXio.irx", NULL, 0, 0 },
+		{ "IOX/File_Manager_Rpc",  "fileXio.irx", NULL, 0, 0 }
 	};
 
 	gz = init_modules_tgz(dir,&gz_size);

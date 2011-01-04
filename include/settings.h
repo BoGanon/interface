@@ -13,7 +13,7 @@ typedef struct {
 typedef struct {
 	unsigned char color[4];
 	unsigned char highlight[4];
-	fsfont_t *fsfont;
+	unsigned char height;
 } font_t;
 
 typedef struct {

@@ -22,14 +22,6 @@ settings_t *settings_init(void)
 		return NULL;
 	}
 
-	settings->font.fsfont = fontstudio_init(16);
-
-	if (settings->font.fsfont == NULL)
-	{
-		free(settings);
-		return NULL;
-	}
-
 	strcpy(settings->home.directory,"mc0:/SYS-CONF");
 
 	return settings;
@@ -38,11 +30,6 @@ settings_t *settings_init(void)
 
 void settings_free(settings_t* settings)
 {
-	if (settings->font.fsfont != NULL)
-	{
-		fontstudio_free(settings->font.fsfont);
-		free(settings->font.fsfont);
-	}
 	free(settings);
 }
 
@@ -103,7 +90,7 @@ void settings_parse(settings_t *settings, config_t *config)
 	strcat(section_path,".Font.");
 
 	sprintf(setting,"%s%s",section_path,"Height");
-	settings->font.fsfont->height = cfg_get_int(setting,16);
+	settings->font.height = cfg_get_int(setting,16);
 
 	sprintf(setting,"%s%s",section_path,"Color");
 	for (i = 0; i < 4; i++)
@@ -221,7 +208,7 @@ void settings_add_to_config(settings_t *settings, config_t *config)
 		{
 
 			setting = config_setting_add(group,"Height",CONFIG_TYPE_INT);
-			config_setting_set_int(setting,settings->font.fsfont->height);
+			config_setting_set_int(setting,settings->font.height);
 
 			setting = config_setting_add(group,"Color",CONFIG_TYPE_ARRAY);
 			for (i = 0; i < 4; i++)
@@ -283,21 +270,5 @@ void settings_load_config(settings_t *settings, char *path)
 	settings_parse(settings,cfg);
 
 	cfg_close(cfg);
-
-}
-
-void settings_load_files(settings_t *settings, gui_vram_t *vram)
-{
-
-	if (settings == NULL || vram == NULL)
-	{
-		return;
-	}
-
-	gui_load_image(settings->home.directory,"bg.png",vram->bg,0);
-	gui_load_image(settings->home.directory,"skin.png",vram->skin,0);
-	gui_load_image(settings->home.directory,"fg.png",vram->fg,vram->fg_clut);
-	gui_load_image(settings->home.directory,"font.png",vram->font,vram->font_clut);
-	gui_load_font_ini(settings->home.directory,settings->font.fsfont);
 
 }

@@ -1,6 +1,8 @@
 #ifndef __LISTS_H__
 #define __LISTS_H__
 
+#include <font.h>
+
 typedef char entry_t;
 
 typedef struct {

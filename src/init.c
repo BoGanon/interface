@@ -21,6 +21,8 @@
 #include <libpwroff.h>
 #include <fileXio_rpc.h>
 #include <audsrv.h>
+#include <SMS_CDDA.h>
+#include <SMS_CDVD.h>
 
 #include <gs_psm.h>
 #include <draw.h>
@@ -478,5 +480,10 @@ void init_cdvd_modules(const char *dir)
 	{
 		free(gz);
 	}
+
+#ifdef SMS_CDVD
+	CDDA_Init();
+	CDVD_Init();
+#endif
 
 }

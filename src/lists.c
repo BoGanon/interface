@@ -6,6 +6,11 @@
 #include <fileXio_rpc.h>
 #include <libhdd.h>
 
+#ifdef SMS_CDVD
+	#include <SMS_CDDA.h>
+	#include <SMS_CDVD.h>
+#endif
+
 #include "lists.h"
 
 static char mass = 0;
@@ -267,6 +272,26 @@ void list_device_types(list_t *list)
 
 }
 
+#ifdef SMS_CDVD
+void refresh_cdfs()
+{
+
+	DiskType type;
+
+	type = CDDA_DiskType();
+
+	if (type == DiskType_DVDV)
+	{
+		CDVD_SetDVDV(1);
+	}
+	else
+	{
+		CDVD_SetDVDV(0);
+	}
+
+}
+#endif /* SMS_CDVD */
+
 void list_mountable_devices(char *device, list_t *list)
 {
 
@@ -333,40 +358,24 @@ void list_mountable_devices(char *device, list_t *list)
 
 	if (!strcmp(device,"cdfs"))
 	{
-		if(!(fileXioGetStat("cdfs:",&stat) < 0))
+		//if(!(fileXioGetStat("cdfs:",&stat) < 0))
 		{
 			add_dir_entry(list->entries,"cdfs:", n++);
 		}
 
+#ifdef SMS_CDVD
+		CDVD_FlushCache();
+		refresh_cdfs();
+#endif /*SMS_CDVD*/
 		list->num = n;
 
 	}
-
-
-
-}
-
-#ifdef SMS_CDVD
-void refresh_cdfs()
-{
-
-	CdvdDiscType_t type;
-
-	CDVD_FlushCache();
-
-	type = cdGetDiscType();
-
-	if (type == CDVD_TYPE_DVDVIDEO)
-	{
-		CDVD_SetDVDV(1);
-	}
 	else
 	{
-		CDVD_SetDVDV(0);
+		CDVD_Stop();
 	}
 
 }
-#endif /* SMS_CDVD */
 
 void list_partitions(list_t *list)
 {
@@ -434,11 +443,7 @@ void list_path(char *path, list_t *list)
 #ifdef SMS_CDVD
 	if(!strncmp(path,"cdfs:",5))
 	{
-		refresh_cdfs();
-	}
-	else
-	{
-		CDVD_Stop();
+		CDVD_FlushCache();
 	}
 #endif /* SMS_CDVD */
 

@@ -481,9 +481,7 @@ void init_cdvd_modules(const char *dir)
 		free(gz);
 	}
 
-#ifdef SMS_CDVD
 	CDDA_Init();
 	CDVD_Init();
-#endif
 
 }

@@ -6,10 +6,8 @@
 #include <fileXio_rpc.h>
 #include <libhdd.h>
 
-#ifdef SMS_CDVD
-	#include <SMS_CDDA.h>
-	#include <SMS_CDVD.h>
-#endif
+#include <SMS_CDDA.h>
+#include <SMS_CDVD.h>
 
 #include "lists.h"
 
@@ -219,13 +217,11 @@ void list_disable_mass()
 	mass = 0;
 }
 
-// Enable hdd device
 void list_disable_hdd()
 {
 	hdd = 0;
 }
 
-// Enable cdfs device
 void list_disable_cdfs()
 {
 	cdfs = 0;
@@ -272,7 +268,6 @@ void list_device_types(list_t *list)
 
 }
 
-#ifdef SMS_CDVD
 void refresh_cdfs()
 {
 
@@ -290,7 +285,6 @@ void refresh_cdfs()
 	}
 
 }
-#endif /* SMS_CDVD */
 
 void list_mountable_devices(char *device, list_t *list)
 {
@@ -363,10 +357,9 @@ void list_mountable_devices(char *device, list_t *list)
 			add_dir_entry(list->entries,"cdfs:", n++);
 		}
 
-#ifdef SMS_CDVD
 		CDVD_FlushCache();
 		refresh_cdfs();
-#endif /*SMS_CDVD*/
+
 		list->num = n;
 
 	}
@@ -438,14 +431,10 @@ void list_path(char *path, list_t *list)
 
 	iox_dirent_t buf;
 
-	// Refresh the cdfs filesystem or stop cdvd drive
-	// if not using it
-#ifdef SMS_CDVD
 	if(!strncmp(path,"cdfs:",5))
 	{
 		CDVD_FlushCache();
 	}
-#endif /* SMS_CDVD */
 
 	// Add fake .. directory entry
 	add_reg_entry(list->entries, "..", n++);

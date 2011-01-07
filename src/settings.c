@@ -64,8 +64,8 @@ void settings_parse(settings_t *settings, config_t *config)
 	strcat(section_path,".Display.");
 
 	sprintf(setting,"%s%s",section_path,"Mode");
-	settings->display.mode = cfg_get_uint(setting,GRAPH_MODE_AUTO);
-
+	settings->display.mode = cfg_string_to_int(cfg_get_string(setting,"0"));
+	printf("mode = %d\n",settings->display.mode);
 	if (settings->display.mode == GRAPH_MODE_AUTO)
 	{
 		settings->display.mode = graph_get_region();
@@ -75,10 +75,10 @@ void settings_parse(settings_t *settings, config_t *config)
 	settings->display.interlace = cfg_get_bool(setting,0);
 
 	sprintf(setting,"%s%s",section_path,"Offset.X");
-	settings->display.x = cfg_get_int(setting,0);
+	settings->display.x = cfg_string_to_int(cfg_get_string(setting,"0"));
 
 	sprintf(setting,"%s%s",section_path,"Offset.Y");
-	settings->display.y = cfg_get_int(setting,0);
+	settings->display.y = cfg_string_to_int(cfg_get_string(setting,"0"));
 
 	/// Sound
 	strcpy(section_path,ps2);
@@ -88,25 +88,25 @@ void settings_parse(settings_t *settings, config_t *config)
 	settings->sound.stereo = cfg_get_bool(setting,1);
 
 	sprintf(setting,"%s%s",section_path,"Volume");
-	settings->sound.volume = cfg_get_int(setting,100);
+	settings->sound.volume = cfg_string_to_int(cfg_get_string(setting,"100"));
 
 	/// Font
 	strcpy(section_path,ps2);
 	strcat(section_path,".Font.");
 
 	sprintf(setting,"%s%s",section_path,"Height");
-	settings->font.height = cfg_get_int(setting,16);
+	settings->font.height = cfg_string_to_int(cfg_get_string(setting,"16"));
 
 	sprintf(setting,"%s%s",section_path,"Color");
 	for (i = 0; i < 4; i++)
 	{
-		settings->font.color[i] = cfg_get_int_elem(setting,i,0x80);
+		settings->font.color[i] = cfg_string_to_int(cfg_get_string_elem(setting,i,"128"));
 	}
 
 	sprintf(setting,"%s%s",section_path,"Highlight");
 	for (i = 0; i < 4; i++)
 	{
-		settings->font.highlight[i] = cfg_get_int_elem(setting,i,0xFF);
+		settings->font.highlight[i] = cfg_string_to_int(cfg_get_string_elem(setting,i,"255"));
 	}
 
 	/// Input
@@ -114,10 +114,10 @@ void settings_parse(settings_t *settings, config_t *config)
 	strcat(section_path,".Input.");
 
 	sprintf(setting,"%s%s",section_path,"Port");
-	settings->input.port = cfg_get_uint(setting,0);
+	settings->input.port = cfg_string_to_int(cfg_get_string(setting,"0"));
 
 	sprintf(setting,"%s%s",section_path,"Slot");
-	settings->input.slot = cfg_get_uint(setting,0);
+	settings->input.slot = cfg_string_to_int(cfg_get_string(setting,"0"));
 
 	sprintf(setting,"%s%s",section_path,"Confirm");
 	if (!strcmp("X",cfg_get_string(setting,"X")))
@@ -133,9 +133,6 @@ void settings_parse(settings_t *settings, config_t *config)
 	strcpy(section_path,ps2);
 	strcat(section_path,".Devices.");
 
-	sprintf(setting,"%s%s",section_path,"CDVD");
-	settings->devices.mass = cfg_get_bool(setting,0);
-
 	sprintf(setting,"%s%s",section_path,"Mass");
 	settings->devices.mass = cfg_get_bool(setting,0);
 
@@ -149,10 +146,12 @@ void settings_add_to_config(settings_t *settings, config_t *config)
 
 	int i;
 
+	char value[256];
+
 	config_setting_t *root;
 	config_setting_t *ps2;
 	config_setting_t *group;
-	config_setting_t *subgroup;
+
 	config_setting_t *setting;
 
 	if (config == NULL)
@@ -179,22 +178,21 @@ void settings_add_to_config(settings_t *settings, config_t *config)
 		group = config_setting_add(ps2,"Display", CONFIG_TYPE_GROUP);
 		{
 
-			setting = config_setting_add(group,"Mode",CONFIG_TYPE_INT);
-			config_setting_set_int(setting,settings->display.mode);
+
+			setting = config_setting_add(group,"OffsetX",CONFIG_TYPE_STRING);
+			cfg_int_to_string(value,settings->display.x);
+			config_setting_set_string(setting,value);
+
+			setting = config_setting_add(group,"OffsetY",CONFIG_TYPE_STRING);
+			cfg_int_to_string(value,settings->display.y);
+			config_setting_set_string(setting,value);
+
+			setting = config_setting_add(group,"Mode",CONFIG_TYPE_STRING);
+			cfg_int_to_string(value,settings->display.mode);
+			config_setting_set_string(setting,value);
 
 			setting = config_setting_add(group,"Interlace",CONFIG_TYPE_BOOL);
 			config_setting_set_bool(setting,settings->display.interlace);
-
-			subgroup = config_setting_add(group,"Offset",CONFIG_TYPE_GROUP);
-			{
-
-				setting = config_setting_add(subgroup,"X",CONFIG_TYPE_INT);
-				config_setting_set_int(setting,settings->display.x);
-
-				setting = config_setting_add(subgroup,"Y",CONFIG_TYPE_INT);
-				config_setting_set_int(setting,settings->display.y);
-
-			}
 
 		}
 
@@ -204,38 +202,44 @@ void settings_add_to_config(settings_t *settings, config_t *config)
 			setting = config_setting_add(group,"Stereo",CONFIG_TYPE_BOOL);
 			config_setting_set_bool(setting,settings->sound.stereo);
 
-			setting = config_setting_add(group,"Volume",CONFIG_TYPE_INT);
-			config_setting_set_int(setting,settings->sound.volume);
+			setting = config_setting_add(group,"Volume",CONFIG_TYPE_STRING);
+			cfg_int_to_string(value,settings->sound.volume);
+			config_setting_set_string(setting,value);
 
 		}
 
 		group = config_setting_add(ps2,"Font",CONFIG_TYPE_GROUP);
 		{
 
-			setting = config_setting_add(group,"Height",CONFIG_TYPE_INT);
-			config_setting_set_int(setting,settings->font.height);
+			setting = config_setting_add(group,"Height",CONFIG_TYPE_STRING);
+			cfg_int_to_string(value,settings->font.height);
+			config_setting_set_string(setting,value);
 
 			setting = config_setting_add(group,"Color",CONFIG_TYPE_ARRAY);
 			for (i = 0; i < 4; i++)
 			{
-				config_setting_set_int_elem(setting,-1,settings->font.color[i]);
+				cfg_int_to_string(value,settings->font.color[i]);
+				config_setting_set_string_elem(setting,-1,value);
 			}
 
 			setting = config_setting_add(group,"Highlight",CONFIG_TYPE_ARRAY);
 			for (i = 0; i < 4; i++)
 			{
-				config_setting_set_int_elem(setting,-1,settings->font.highlight[i]);
+				cfg_int_to_string(value,settings->font.highlight[i]);
+				config_setting_set_string_elem(setting,-1,value);
 			}
 		}
 
 		group = config_setting_add(ps2,"Input",CONFIG_TYPE_GROUP);
 		{
 
-			setting = config_setting_add(group,"Port",CONFIG_TYPE_INT);
-			config_setting_set_int(setting,settings->input.port);
+			setting = config_setting_add(group,"Port",CONFIG_TYPE_STRING);
+			cfg_int_to_string(value,settings->input.port);
+			config_setting_set_string(setting,value);
 
-			setting = config_setting_add(group,"Slot",CONFIG_TYPE_INT);
-			config_setting_set_int(setting,settings->input.slot);
+			setting = config_setting_add(group,"Slot",CONFIG_TYPE_STRING);
+			cfg_int_to_string(value,settings->input.slot);
+			config_setting_set_string(setting,value);
 
 			setting = config_setting_add(group,"Confirm",CONFIG_TYPE_STRING);
 			if (settings->input.confirm == PAD_CROSS)
@@ -252,9 +256,6 @@ void settings_add_to_config(settings_t *settings, config_t *config)
 		group = config_setting_add(ps2,"Devices",CONFIG_TYPE_GROUP);
 		{
 
-			setting = config_setting_add(group,"CDVD",CONFIG_TYPE_BOOL);
-			config_setting_set_bool(setting,settings->devices.cdvd);
-
 			setting = config_setting_add(group,"Mass",CONFIG_TYPE_BOOL);
 			config_setting_set_bool(setting,settings->devices.mass);
 
@@ -267,13 +268,53 @@ void settings_add_to_config(settings_t *settings, config_t *config)
 
 }
 
-void settings_load_config(settings_t *settings, char *path)
+settings_t *settings_open(const char *file)
 {
 
-	config_t *cfg = cfg_open(path);
+	config_t *cfg;
+	FILE *f;
+
+	char path[256];
+
+	settings_t *settings;
+
+#ifdef PS2LINK
+	strcpy(path,"host:");
+#else
+	strcpy(path,"mc0:/SYS-CONF");
+#endif
+	strcat(path,"/");
+	strcat(path,file);
+
+	// Check for configuration file on memory card
+	if ((f = fopen(path,"r")) == NULL)
+	{
+#ifndef PS2LINK
+		path[2] = '1';
+
+		if ((f = fopen(path,"r")) == NULL)
+		{
+			path[2] = '0';
+		}
+		else
+		{
+			fclose(f);
+		}
+#endif
+	}
+	else
+	{
+		fclose(f);
+	}
+
+	settings = settings_init();
+
+	cfg = cfg_open(path);
 
 	settings_parse(settings,cfg);
 
 	cfg_close(cfg);
+
+	return settings;
 
 }

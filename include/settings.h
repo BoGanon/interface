@@ -11,17 +11,17 @@ typedef struct {
 } home_t;
 
 typedef struct {
-	unsigned char color[4];
-	unsigned char highlight[4];
-	unsigned char height;
-} font_t;
-
-typedef struct {
 	char mode;
 	char interlace;
 	char x;
 	char y;
 } display_t;
+
+typedef struct {
+	unsigned char color[4];
+	unsigned char highlight[4];
+	unsigned char height;
+} font_t;
 
 typedef struct {
 	char port;
@@ -31,7 +31,6 @@ typedef struct {
 } input_t;
 
 typedef struct {
-	char cdvd;
 	char mass;
 	char hdd;
 } device_t;
@@ -40,6 +39,7 @@ typedef struct {
 	char stereo;
 	char volume;
 } sound_t;
+
 
 typedef struct {
 	home_t    home;
@@ -65,7 +65,6 @@ typedef struct {
 "PS2.Input.Port"
 "PS2.Input.Slot"
 "PS2.Input.Confim"
-"PS2.Devices.CDVD"
 "PS2.Devices.Mass"
 "PS2.Devices.HDD"
 */
@@ -80,14 +79,13 @@ extern "C" {
 	// Deallocates settings 
 	void settings_free(settings_t *settings);
 
+	// Opens file in mc0:/SYS-CONF
+	// Returns loaded settings on success
+	// Returns default settings on failure
+	settings_t *settings_open(const char *file);
+
 	// Adds the settings to config
 	void settings_add_to_config(settings_t *settings,config_t *config);
-
-	// Tries to load a configuration file
-	// Returns loaded settings on success
-	// Returns default settings on failure to load file
-	// Returns NULL on failure to allocate memory
-	void settings_load_config(settings_t *settings, char *path);
 
 	// Loads the files needed for the GUI
 	void settings_load_files(settings_t *settings, gui_vram_t *vram);

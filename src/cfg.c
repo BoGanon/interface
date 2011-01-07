@@ -81,6 +81,16 @@ void cfg_close(config_t *config)
 	free(config);
 }
 
+void cfg_int_to_string(char *out, int in)
+{
+	sprintf(out,"%d",in);
+}
+
+long cfg_string_to_int(const char *in)
+{
+	return strtol(in,NULL,0);
+}
+
 unsigned char config_get_bool(config_t *config, char *setting, unsigned char initial)
 {
 	config_setting_t *config_setting = config_lookup(config,setting);
@@ -149,6 +159,28 @@ const char *config_get_string(config_t *config, char *setting, char *initial)
 	else
 	{
 		if ((value = config_setting_get_string(config_setting)) == NULL)
+		{
+			return initial;
+		}
+		else
+		{
+			return value;
+		}
+	}
+}
+
+const char *config_get_string_elem(config_t *config, char *setting, int element, char *initial)
+{
+	const char *value;
+	config_setting_t *config_setting = config_lookup(config,setting);
+
+	if (config_setting == NULL)
+	{
+		return initial;
+	}
+	else
+	{
+		if ((value = config_setting_get_string_elem(config_setting,element)) == NULL)
 		{
 			return initial;
 		}

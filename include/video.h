@@ -11,17 +11,20 @@ extern "C" {
 	// Frees the packets
 	void video_packets_free(void);
 
-	// Initializes framebuffers in vram
-	void video_framebuffer_init(int width, int height);
+	// Initializes the GIF dma channel
+	void video_init_dmac(void);
 
-	// Initializes the texture and clut buffers in vram (call once after framebuffer init)
-	void video_texbuffer_init(int width, int height, int tex_psm, int clut_psm);
+	// Initializes framebuffers in vram
+	void video_init_framebuffer(int width, int height);
 
 	// Initializes screen and drawing environment and vsync handler (can be reused)
 	void video_init_screen(int x, int y, int width, int height, int interlace, int mode);
 
 	// Initializes the drawing environment
 	void video_init_draw_env(int width, int height);
+
+	// Initializes the texture and clut buffers in vram (call once after framebuffer init)
+	void video_init_texbuffer(int width, int height, int tex_psm, int clut_psm);
 
 	// Enable vsync handler
 	void video_enable_vsync_handler();

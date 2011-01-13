@@ -49,7 +49,13 @@ void video_packets_free()
 
 }
 
-void video_framebuffer_init(int width, int height)
+void video_init_dmac(void)
+{
+	dma_channel_initialize(DMA_CHANNEL_GIF,NULL,0);
+	dma_channel_fast_waits(DMA_CHANNEL_GIF);
+}
+
+void video_init_framebuffer(int width, int height)
 {
 
 	graph_vram_clear();
@@ -201,7 +207,7 @@ void video_init_draw_env(int width, int height)
 
 }
 
-void video_texbuffer_init(int width, int height, int tex_psm, int clut_psm)
+void video_init_texbuffer(int width, int height, int tex_psm, int clut_psm)
 {
 
 	// Sets up the texture buffer attributes

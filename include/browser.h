@@ -2,7 +2,6 @@
 #define __BROWSER_H__
 
 #include "lists.h"
-#include "settings.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,7 +11,7 @@ extern "C" {
 	char *browser_path();
 
 	// Browser for list
-	int browser_list(list_t *list, int buttons, settings_t *settings);
+	int browser_list(list_t *list, int buttons);
 
 #ifdef __cplusplus
 };

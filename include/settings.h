@@ -40,7 +40,6 @@ typedef struct {
 	char volume;
 } sound_t;
 
-
 typedef struct {
 	home_t    home;
 	display_t display;
@@ -69,26 +68,20 @@ typedef struct {
 "PS2.Devices.HDD"
 */
 
+extern settings_t settings;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-	// Allocates and initializes settings
-	settings_t *settings_init(void);
+	// Initializes settings values
+	void settings_init(const char * file);
 
-	// Deallocates settings 
-	void settings_free(settings_t *settings);
-
-	// Opens file in mc0:/SYS-CONF
-	// Returns loaded settings on success
-	// Returns default settings on failure
-	settings_t *settings_open(const char *file);
+	// Parses the configuration's values for the settings
+	void settings_parse(config_t *config);
 
 	// Adds the settings to config
-	void settings_add_to_config(settings_t *settings,config_t *config);
-
-	// Loads the files needed for the GUI
-	void settings_load_files(settings_t *settings, gui_vram_t *vram);
+	void settings_add_to_config(config_t *config);
 
 #ifdef __cplusplus
 };

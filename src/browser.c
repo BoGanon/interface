@@ -6,6 +6,7 @@
 
 #include "browser.h"
 #include "hdd.h"
+#include "settings.h"
 
 static char path[256];
 
@@ -14,7 +15,7 @@ char *browser_path()
 	return path;
 }
 
-int browser_list(list_t *list, int buttons, settings_t *settings)
+int browser_list(list_t *list, int buttons)
 {
 
 	static int index = 0;
@@ -42,7 +43,7 @@ int browser_list(list_t *list, int buttons, settings_t *settings)
 		}
 	}
 
-	if(buttons & settings->input.confirm)
+	if(buttons & settings.input.confirm)
 	{
 
 		//printf("entry = %s\n", list.entries[list.selection]);
@@ -111,7 +112,7 @@ int browser_list(list_t *list, int buttons, settings_t *settings)
 				// index == 2 is for mounting devices or any additional handling to get a root directory
 				if (!strcmp(path,"hdd"))
 				{
-					if (!strcmp(list->entries[list->selection],settings->home.partition))
+					if (!strcmp(list->entries[list->selection],settings.home.partition))
 					{
 						prev_mnt = 1;
 					}

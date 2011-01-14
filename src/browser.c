@@ -10,9 +10,22 @@
 
 static char path[256];
 
-char *browser_path()
+char *browser_get_path()
 {
 	return path;
+}
+
+void browser_reset_path(void)
+{
+
+	// If path is pfs1, it's a non-home mounted partition
+	if (!strncmp(path,"pfs1",4))
+	{
+		unmount_partition(1);
+	}
+
+	path[0] = 0;
+
 }
 
 int browser_list(list_t *list, int buttons)
@@ -128,7 +141,7 @@ int browser_list(list_t *list, int buttons)
 				// If the selection is not a directory
 				if (!strchr(list->entries[list->selection],'/'))
 				{
-					printf("file\n");
+					//printf("file\n");
 					index = 0;
 					prev_mnt = 0;
 					return 1;

@@ -17,28 +17,33 @@ typedef struct {
 	int font_clut;
 } gui_vram_t;
 
-extern float gui_screen_height;
-extern unsigned char skin_tgz[];
-extern unsigned int  size_skin_tgz;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-	// Allocates and initializes the vram map
-	gui_vram_t *gui_vram_init(void);
+	// Initializes GUI data structures
+	void gui_init(int font_height);
 
-	// Frees the vram map
-	void gui_vram_free(gui_vram_t *vram);
+	// Frees memory used by the GUI
+	void gui_free();
 
-	// Allocates gui font and loads ini from skin.tgz
-	fsfont_t *gui_font_init(char *dir, int height);
+	// Sets the screen height for rendering
+	void gui_set_screen_height(float height);
 
-	// Frees gui font
-	void gui_font_free(fsfont_t *gui_font);
+	// Gets the screen height value
+	float gui_get_screen_height(void);
+
+	// Returns copy of vram map
+	gui_vram_t gui_vram_get(void);
+
+	// Returns the gui font
+	fsfont_t *gui_font_get(void);
+
+	// Frees gui font (takes up a bit of memory for large fonts)
+	void gui_font_free(void);
 
 	// Loads skin image files from skin.tgz
-	void gui_load_skin(char *dir, gui_vram_t *vram, fsfont_t *gui_font);
+	void gui_load_skin(char *path);
 
 	// Determines whether to draw background
 	char gui_background_exists();
@@ -46,17 +51,8 @@ extern "C" {
 	// Determines whether to draw foreground
 	char gui_foreground_exists();
 
-	// Sends image to vram
-	void gui_send_image(image_t *image,int texture, int clut);
-
-	// Loads image from tar and sends to vram
-	int gui_load_image(char *tar, int tar_size, char *file, int texaddr, int clutaddr);
-
-	// Loads font ini
-	int gui_load_font_ini(char *tar, int tar_size, fsfont_t *gui_font);
-
 	// Switches the texturebuffer to a specific texture
-	qword_t *gui_setup_texbuffer(qword_t *q, int type, gui_vram_t *vram);
+	qword_t *gui_setup_texbuffer(qword_t *q, int type);
 
 	// Renders GUI elements
 	qword_t *gui_background(qword_t *q);

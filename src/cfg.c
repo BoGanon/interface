@@ -2,7 +2,7 @@
 
 #include "cfg.h"
 
-config_t *cfg_open(char *path)
+config_t *cfg_open(const char *path)
 {
 
 	FILE *file = NULL;

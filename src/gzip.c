@@ -6,7 +6,7 @@
 
 #define GZ_CHUNK 16384
 
-char *gzip_load_file(char *path, int *size)
+char *gzip_load_file(const char *path, int *size)
 {
 
 	FILE *file;

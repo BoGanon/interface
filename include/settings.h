@@ -68,14 +68,16 @@ typedef struct {
 "PS2.Devices.HDD"
 */
 
-extern settings_t settings;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
 	// Initializes settings values
 	void settings_init(const char * file);
+
+	// Returns a pointer to the settings
+	settings_t settings_get(void);
 
 	// Parses the configuration's values for the settings
 	void settings_parse(config_t *config);

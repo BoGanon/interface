@@ -28,7 +28,7 @@ extern "C" {
 
 	// Loads a file into memory and returns pointer to it
 	// Returns NULL on failure
-	char *gzip_load_file(char *path, int *size);
+	char *gzip_load_file(const char *path, int *size);
 
 	// Uncompresses a gzipped file buffer into output buffer
 	int gzip_uncompress(void *gz, char *outbuffer);

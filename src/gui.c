@@ -16,10 +16,109 @@
 #include "gzip.h"
 #include "tar.h"
 
-float gui_screen_height = 512.0f;
+extern unsigned char skin_tgz[];
+extern unsigned int  size_skin_tgz;
+
+static float gui_screen_height = 512.0f;
 
 static char bg = 0;
 static char fg = 0;
+
+static gui_vram_t vram;
+static fsfont_t *gui_font = NULL;
+
+// Sends image to vram
+//void gui_send_image(image_t *image,int texture, int clut);
+
+// Loads image from tar and sends to vram
+//int gui_load_image(char *tar, int tar_size, char *file, int texaddr, int clutaddr);
+
+// Loads font ini
+//int gui_load_font_ini(char *tar, int tar_size);
+
+// Allocates and initializes the vram map
+//void gui_vram_init(void);
+
+// Allocates gui font and loads ini from skin.tgz
+//void gui_font_init(int height);
+
+void gui_vram_init(void)
+{
+
+	graph_vram_clear();
+
+	// Make room for framebuffers
+	graph_vram_allocate(512,512,GS_PSM_16S,GRAPH_ALIGN_PAGE);
+	graph_vram_allocate(512,512,GS_PSM_16S,GRAPH_ALIGN_PAGE);
+
+	vram.bg = graph_vram_allocate(512,512,GS_PSM_32,GRAPH_ALIGN_BLOCK);
+	vram.fg = graph_vram_allocate(512,512,GS_PSM_8,GRAPH_ALIGN_BLOCK);
+	vram.fg_clut = graph_vram_allocate(16,16,GS_PSM_32,GRAPH_ALIGN_BLOCK);
+	vram.misc = graph_vram_allocate(256,256,GS_PSM_32,GRAPH_ALIGN_BLOCK);
+	vram.skin = graph_vram_allocate(512,128,GS_PSM_32,GRAPH_ALIGN_BLOCK);
+	vram.font = graph_vram_allocate(1024,1024,GS_PSM_4,GRAPH_ALIGN_BLOCK);
+	vram.font_clut = graph_vram_allocate(8,2,GS_PSM_32,GRAPH_ALIGN_BLOCK);
+
+}
+
+gui_vram_t gui_vram_get(void)
+{
+	return vram;
+}
+
+void gui_font_init(int height)
+{
+
+	gui_font = fontstudio_init(height);
+
+	gui_font->charmap = NULL;
+	gui_font->chardata = NULL;
+
+}
+
+void gui_init(int font_height)
+{
+
+	gui_vram_init();
+
+	if (gui_font != NULL)
+	{
+		gui_font_free();
+	}
+
+	gui_font_init(font_height);
+
+}
+
+void gui_free()
+{
+
+	if (gui_font != NULL)
+	{
+		gui_font_free();
+	}
+
+}
+
+fsfont_t *gui_font_get(void)
+{
+	return gui_font;
+}
+
+void gui_font_free(void)
+{
+	fontstudio_free(gui_font);
+}
+
+void gui_set_screen_height(float height)
+{
+	gui_screen_height = height;
+}
+
+float gui_get_screen_height(void)
+{
+	return gui_screen_height;
+}
 
 char gui_background_exists()
 {
@@ -31,18 +130,13 @@ char gui_foreground_exists()
 	return fg;
 }
 
-char *gui_skin_tgz(const char *dir, int *gz_size)
+char *gui_skin_tgz(const char *path, int *gz_size)
 {
-
-	char path[256];
 
 	char *gz;
 
-	if (dir != NULL)
+	if (path != NULL)
 	{
-		strcpy(path,dir);
-		strcat(path,"/skin.tgz");
-
 		gz = gzip_load_file(path,gz_size);
 	}
 	else
@@ -51,132 +145,34 @@ char *gui_skin_tgz(const char *dir, int *gz_size)
 		*gz_size = size_skin_tgz;
 	}
 
-	if (gz == NULL)
-	{
-		return NULL;
-	}
-
 	return gz;
 
 }
 
-gui_vram_t *gui_vram_init(void)
+void gui_send_image(image_t *image,int texture, int clut)
 {
 
-	gui_vram_t *vram = (gui_vram_t*)malloc(sizeof(gui_vram_t));
+	packet_t *packet;
+	qword_t *q;
 
-	if (vram == NULL)
+	// Shouldn't need more than 50
+	packet = packet_init(50,PACKET_UCAB);
+
+	q = packet->data;
+
+	q = draw_texture_transfer(q,image->texture.data,image->texture.width,image->texture.height,image->texture.psm,texture,image->texture.width);
+
+	if (image->texture.psm == GS_PSM_4 || image->texture.psm == GS_PSM_8)
 	{
-		return NULL;
+		q = draw_texture_transfer(q,image->palette.data,image->palette.width,image->palette.height,image->palette.psm,clut,64);
 	}
 
-	vram->bg = graph_vram_allocate(512,512,GS_PSM_32,GRAPH_ALIGN_BLOCK);
-	vram->fg = graph_vram_allocate(512,512,GS_PSM_8,GRAPH_ALIGN_BLOCK);
-	vram->fg_clut = graph_vram_allocate(16,16,GS_PSM_32,GRAPH_ALIGN_BLOCK);
-	vram->misc = graph_vram_allocate(256,256,GS_PSM_32,GRAPH_ALIGN_BLOCK);
-	vram->skin = graph_vram_allocate(512,128,GS_PSM_32,GRAPH_ALIGN_BLOCK);
-	vram->font = graph_vram_allocate(1024,1024,GS_PSM_4,GRAPH_ALIGN_BLOCK);
-	vram->font_clut = graph_vram_allocate(8,2,GS_PSM_32,GRAPH_ALIGN_BLOCK);
+	q = draw_texture_flush(q);
 
-	return vram;
+	dma_channel_send_chain_ucab(DMA_CHANNEL_GIF,packet->data, q - packet->data, 0);
+	dma_wait_fast();
 
-}
-
-void gui_vram_free(gui_vram_t *vram)
-{
-	graph_vram_clear();
-	free(vram);
-}
-
-void gui_load_skin(char *dir, gui_vram_t *vram, fsfont_t *gui_font)
-{
-
-	char *tar;
-	int tar_size;
-
-	char *gz;
-	int gz_size;
-
-	if (vram == NULL || gui_font == NULL)
-	{
-		return;
-	}
-
-	gz = gui_skin_tgz(dir,&gz_size);
-
-	if (gz == NULL)
-	{
-		return;
-	}
-
-	tar_size = gzip_get_size(gz,gz_size);
-
-	tar = malloc(tar_size);
-
-	if (gzip_uncompress(gz,tar) != Z_OK)
-	{
-		free(tar);
-		if (gz != (char*)skin_tgz)
-		{
-			free(gz);
-		}
-		return;
-	}
-
-	if (gui_load_image(tar,tar_size,"bg.png",vram->bg,0) < 0)
-	{
-		bg = 0;
-	}
-	else
-	{
-		bg = 1;
-	}
-
-	if (gui_load_image(tar,tar_size,"skin.png",vram->skin,0) < 0)
-	{
-		free(tar);
-		if (gz != (char*)skin_tgz)
-		{
-			free(gz);
-		}
-		gui_load_skin(NULL,vram,gui_font);
-	}
-
-	if (gui_load_image(tar,tar_size,"fg.png",vram->fg,vram->fg_clut) < 0)
-	{
-		fg = 0;
-	}
-	else
-	{
-		fg = 1;
-	}
-
-	if (gui_load_image(tar,tar_size,"font.png",vram->font,vram->font_clut) < 0)
-	{
-		free(tar);
-		if (gz != (char*)skin_tgz)
-		{
-			free(gz);
-		}
-		gui_load_skin(NULL,vram,gui_font);
-	}
-
-	if (gui_load_font_ini(tar,tar_size,gui_font) < 0)
-	{
-		free(tar);
-		if (gz != (char*)skin_tgz)
-		{
-			free(gz);
-		}
-		gui_load_skin(NULL,vram,gui_font);
-	}
-
-	free(tar);
-
-	if (gz != (char*)skin_tgz)
-	{
-		free(gz);
-	}
+	packet_free(packet);
 
 }
 
@@ -209,7 +205,7 @@ int gui_load_image(char *tar, int tar_size, char *file, int texaddr, int clutadd
 	return 0;
 }
 
-int gui_load_font_ini(char *tar, int tar_size, fsfont_t *gui_font)
+int gui_load_font_ini(char *tar, int tar_size)
 {
 
 	char *ini;
@@ -239,53 +235,94 @@ int gui_load_font_ini(char *tar, int tar_size, fsfont_t *gui_font)
 
 }
 
-fsfont_t *gui_font_init(char *dir, int height)
+void gui_load_skin(char *path)
 {
 
-	fsfont_t *gui_font;
+	char *tar;
+	int tar_size;
 
-	gui_font = fontstudio_init(height);
+	char *gz;
+	int gz_size;
 
-	gui_font->charmap = NULL;
-	gui_font->chardata = NULL;
+	gz = gui_skin_tgz(path,&gz_size);
 
-	return gui_font;
-
-}
-
-void gui_font_free(fsfont_t *gui_font)
-{
-	fontstudio_free(gui_font);
-}
-
-void gui_send_image(image_t *image,int texture, int clut)
-{
-
-	packet_t *packet;
-	qword_t *q;
-
-	// Shouldn't need more than 50
-	packet = packet_init(50,PACKET_UCAB);
-
-	q = packet->data;
-
-	q = draw_texture_transfer(q,image->texture.data,image->texture.width,image->texture.height,image->texture.psm,texture,image->texture.width);
-
-	if (image->texture.psm == GS_PSM_4 || image->texture.psm == GS_PSM_8)
+	if (gz == NULL)
 	{
-		q = draw_texture_transfer(q,image->palette.data,image->palette.width,image->palette.height,image->palette.psm,clut,64);
+		return;
 	}
 
-	q = draw_texture_flush(q);
+	tar_size = gzip_get_size(gz,gz_size);
 
-	dma_channel_send_chain_ucab(DMA_CHANNEL_GIF,packet->data, q - packet->data, 0);
-	dma_wait_fast();
+	tar = malloc(tar_size);
 
-	packet_free(packet);
+	if (gzip_uncompress(gz,tar) != Z_OK)
+	{
+		free(tar);
+		if (gz != (char*)skin_tgz)
+		{
+			free(gz);
+		}
+		return;
+	}
+
+	if (gui_load_image(tar,tar_size,"bg.png",vram.bg,0) < 0)
+	{
+		bg = 0;
+	}
+	else
+	{
+		bg = 1;
+	}
+
+	if (gui_load_image(tar,tar_size,"skin.png",vram.skin,0) < 0)
+	{
+		free(tar);
+		if (gz != (char*)skin_tgz)
+		{
+			free(gz);
+		}
+		gui_load_skin(NULL);
+	}
+
+	if (gui_load_image(tar,tar_size,"fg.png",vram.fg,vram.fg_clut) < 0)
+	{
+		fg = 0;
+	}
+	else
+	{
+		fg = 1;
+	}
+
+	if (gui_load_image(tar,tar_size,"font.png",vram.font,vram.font_clut) < 0)
+	{
+		free(tar);
+		if (gz != (char*)skin_tgz)
+		{
+			free(gz);
+		}
+		gui_load_skin(NULL);
+	}
+
+	if (gui_load_font_ini(tar,tar_size) < 0)
+	{
+		free(tar);
+		if (gz != (char*)skin_tgz)
+		{
+			free(gz);
+		}
+		gui_load_skin(NULL);
+	}
+
+	free(tar);
+
+	if (gz != (char*)skin_tgz)
+	{
+		free(gz);
+	}
 
 }
 
-qword_t *gui_setup_texbuffer(qword_t *q, int type, gui_vram_t *vram)
+qword_t *gui_setup_texbuffer(qword_t *q, int type)
 {
 
 	texbuffer_t tex;
@@ -320,32 +357,32 @@ qword_t *gui_setup_texbuffer(qword_t *q, int type, gui_vram_t *vram)
 			tex.info.width = draw_log2(1024);
 			tex.width = 1024;
 			tex.psm = GS_PSM_4;
-			tex.address = vram->font;
+			tex.address = vram.font;
 			clut.storage_mode = CLUT_STORAGE_MODE1;
 			clut.psm = GS_PSM_32;
 			clut.load_method = CLUT_LOAD;
-			clut.address = vram->font_clut;
+			clut.address = vram.font_clut;
 			break;
 		}
 		case FOREGROUND:
 		{
 			tex.psm = GS_PSM_8;
-			tex.address = vram->fg;
+			tex.address = vram.fg;
 			clut.storage_mode = CLUT_STORAGE_MODE1;
 			clut.psm = GS_PSM_32;
 			clut.load_method = CLUT_LOAD;
-			clut.address = vram->fg_clut;
+			clut.address = vram.fg_clut;
 			break;
 		}
 		case SKIN:
 		{
 			tex.info.height = draw_log2(128);
-			tex.address = vram->skin;
+			tex.address = vram.skin;
 			break;
 		}
 		case BACKGROUND:
 		{
-			tex.address = vram->bg;
+			tex.address = vram.bg;
 			break;
 		}
 	}
@@ -545,8 +582,6 @@ qword_t *gui_box(qword_t *q, float x, float y, int width, int height, int active
 	}
 
 	q = draw_round_rect_filled(q,0,&bg);
-
-	draw_disable_blending();
 
 	//top left corner
 /*
@@ -804,7 +839,7 @@ qword_t *gui_basic_layout(qword_t *q, unsigned char alpha)
 
 	q = gui_header(q,512.0f,alpha);
 	q = gui_footer(q,gui_screen_height-50.0f,512.0f,alpha);
-	q = gui_logo(q,256.0f,20.0f,alpha);
+	q = gui_logo(q,256.0f,16.0f,alpha);
 
 	return q;
 }

@@ -9,7 +9,7 @@ extern "C" {
 
 	// Opens a configuration from path and returns it
 	// Returns NULL on failure
-	config_t *cfg_open(char *path);
+	config_t *cfg_open(const char *path);
 
 	// Closes a configuration
 	void cfg_close(config_t *config);

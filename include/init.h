@@ -20,7 +20,7 @@ extern "C" {
 	void reset_iop(void);
 
 	// Loads modules.tgz from directory or uses embedded buffer
-	char *init_modules_tgz(const char *dir, int *gz_size);
+	char *init_modules_tgz(const char *path, int *gz_size);
 
 	// Loads modules from bios
 	int init_load_bios(module_t *modules, int num);
@@ -35,22 +35,22 @@ extern "C" {
 	void init_load_erom(void);
 
 	// Init basic irx modules
-	void init_basic_modules(const char *dir);
+	void init_basic_modules(const char *path);
 
 	// Init dev9 irx modules
-	void init_dev9_modules(const char *dir);
+	void init_dev9_modules(const char *path);
 
 	// Init usb irx modules
-	void init_usb_modules(const char *dir);
+	void init_usb_modules(const char *path);
 
 	// Init hdd irx modules
-	void init_hdd_modules(const char *dir);
+	void init_hdd_modules(const char *path);
 
 	// Init sound irx modules
-	void init_sound_modules(const char *dir);
+	void init_sound_modules(const char *path);
 
 	// Init cdvd irx modules
-	void init_cdvd_modules(const char *dir);
+	void init_cdvd_modules(const char *path);
 
 #ifdef __cplusplus
 };

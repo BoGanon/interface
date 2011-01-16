@@ -149,23 +149,18 @@ int init_load_bios(module_t *modules, int num)
 
 }
 
-char *init_modules_tgz(const char *dir, int *gz_size)
+char *init_modules_tgz(const char *path, int *gz_size)
 {
-
-	char path[256];
 
 	char *gz;
 
-	if (dir != NULL)
+	if (path != NULL)
 	{
-		strcpy(path,dir);
-		strcat(path,"/modules.tgz");
-
 		gz = gzip_load_file(path,gz_size);
 	}
 	else
 	{
-		gz = (char*)modules_tgz;
+		gz = modules_tgz;
 		*gz_size = size_modules_tgz;
 	}
 
@@ -296,7 +291,7 @@ void reset_iop(void)
 
 }
 
-void init_basic_modules(const char *dir)
+void init_basic_modules(const char *path)
 {
 
 	char *gz;
@@ -313,7 +308,7 @@ void init_basic_modules(const char *dir)
 		{ "IOX/File_Manager_Rpc",  "fileXio.irx", NULL, 0, 0 }
 	};
 
-	gz = init_modules_tgz(dir,&gz_size);
+	gz = init_modules_tgz(path,&gz_size);
 
 	init_load_irx(gz, gz_size, basic_modules, 7);
 
@@ -344,7 +339,7 @@ void init_basic_modules(const char *dir)
 
 }
 
-void init_dev9_modules(const char *dir)
+void init_dev9_modules(const char *path)
 {
 
 	char *gz;
@@ -356,7 +351,7 @@ void init_dev9_modules(const char *dir)
 		{      "dev9_driver",  "ps2dev9.irx", NULL, 0, 0}
 	};
 
-	gz = init_modules_tgz(dir,&gz_size);
+	gz = init_modules_tgz(path,&gz_size);
 
 	init_load_irx(gz, gz_size, dev9_modules,2);
 
@@ -380,7 +375,7 @@ void init_dev9_modules(const char *dir)
 
 }
 
-void init_usb_modules(const char *dir)
+void init_usb_modules(const char *path)
 {
 
 	char *gz;
@@ -392,7 +387,7 @@ void init_usb_modules(const char *dir)
 		{ "usb_mass", "usbhdfsd.irx", NULL, 0, 0 }
 	};
 
-	gz = init_modules_tgz(dir,&gz_size);
+	gz = init_modules_tgz(path,&gz_size);
 
 	init_load_irx(gz, gz_size, usb_modules, 2);
 
@@ -403,7 +398,7 @@ void init_usb_modules(const char *dir)
 
 }
 
-void init_hdd_modules(const char *dir)
+void init_hdd_modules(const char *path)
 {
 
 	char *gz;
@@ -424,7 +419,7 @@ void init_hdd_modules(const char *dir)
 		return;
 	}
 
-	gz = init_modules_tgz(dir,&gz_size);
+	gz = init_modules_tgz(path,&gz_size);
 
 	init_load_irx(gz, gz_size, hdd_modules, 3);
 
@@ -435,7 +430,7 @@ void init_hdd_modules(const char *dir)
 
 }
 
-void init_sound_modules(const char *dir)
+void init_sound_modules(const char *path)
 {
 
 	char *gz;
@@ -447,7 +442,7 @@ void init_sound_modules(const char *dir)
 		{ "audsrv", "audsrv.irx", NULL, 0, 0 }
 	};
 
-	gz = init_modules_tgz(dir,&gz_size);
+	gz = init_modules_tgz(path,&gz_size);
 
 	init_load_irx(gz, gz_size, sound_modules, 2);
 
@@ -460,7 +455,7 @@ void init_sound_modules(const char *dir)
 
 }
 
-void init_cdvd_modules(const char *dir)
+void init_cdvd_modules(const char *path)
 {
 
 	char *gz;
@@ -472,7 +467,7 @@ void init_cdvd_modules(const char *dir)
 		{  "SMSCDVD",  "SMSCDVD.irx", NULL, 0, 0 }
 	};
 
-	gz = init_modules_tgz(dir,&gz_size);
+	gz = init_modules_tgz(path,&gz_size);
 
 	init_load_irx(gz, gz_size, cdvd_modules, 2);
 

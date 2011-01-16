@@ -32,8 +32,9 @@ int browser_list(list_t *list, int buttons)
 {
 
 	static int index = 0;
-
 	static int prev_mnt = 0;
+
+	settings_t settings = settings_get();
 
 	if(buttons & PAD_DOWN)
 	{

@@ -10,44 +10,17 @@
 #include "cfg.h"
 #include "settings.h"
 
-settings_t settings;
+static settings_t settings;
 
-void settings_init(const char *file)
+settings_t settings_get(void)
+{
+	return settings;
+}
+
+void settings_init(const char *path)
 {
 
 	config_t *cfg;
-	FILE *f;
-
-	char path[256];
-
-#ifdef PS2LINK
-	strcpy(path,"host:");
-#else
-	strcpy(path,"mc0:/SYS-CONF");
-#endif
-	strcat(path,"/");
-	strcat(path,file);
-
-	// Check for configuration file on memory card
-	if ((f = fopen(path,"r")) == NULL)
-	{
-#ifndef PS2LINK
-		path[2] = '1';
-
-		if ((f = fopen(path,"r")) == NULL)
-		{
-			path[2] = '0';
-		}
-		else
-		{
-			fclose(f);
-		}
-#endif
-	}
-	else
-	{
-		fclose(f);
-	}
 
 	cfg = cfg_open(path);
 

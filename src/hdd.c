@@ -6,6 +6,7 @@
 #include <libhdd.h>
 
 #include "hdd.h"
+#include "strkat.h"
 
 char mount_list[MOUNT_MAX][256] = { {0}, {0},{0} };
 
@@ -84,7 +85,7 @@ int mount_partition(char *path, const char *partition, int mount_point)
 		printf("Previously mounted at pfs%d:\n", ret);
 #endif
 		pfs_path[3] = '0' + ret;
-		strcat(pfs_path,"/");
+		strkat(pfs_path,"/");
 		if (path != NULL)
 		{
 			strcpy(path,pfs_path);
@@ -94,7 +95,7 @@ int mount_partition(char *path, const char *partition, int mount_point)
 	}
 
 	// Create paths for mounting
-	strcat(hdd_path,partition);
+	strkat(hdd_path,partition);
 	pfs_path[3] = '0' + mount_point;
 
 	// Try to mount
@@ -104,7 +105,7 @@ int mount_partition(char *path, const char *partition, int mount_point)
 		strcpy(mount_list[mount_point], partition);
 
 		// Add a slash to the path
-		strcat(pfs_path,"/");
+		strkat(pfs_path,"/");
 
 		if (path != NULL)
 		{

@@ -2,6 +2,8 @@
 #include <string.h>
 #include <libgen.h>
 
+#include "strkat.h"
+
 void _makepath(char *path, const char *device, const char *dir, const char *filename, const char *ext)
 {
 
@@ -12,21 +14,21 @@ void _makepath(char *path, const char *device, const char *dir, const char *file
 
 	if ((device != NULL) && (device != '\0'))
 	{
-		strcat(path,device);
+		strkat(path,device);
 		if (strrchr(path,':') == NULL)
 		{
-			strcat(path,":");
+			strkat(path,":");
 		}
 	}
 
 	if ((dir != NULL) && (dir != '\0'))
 	{
-		strcat(path,dir);
+		strkat(path,dir);
 		if ((pos = strrchr(path,'/')) != NULL);
 		else if ((pos = strrchr(path,'\\')) != NULL);
 		else
 		{
-			strcat(path,"/");
+			strkat(path,"/");
 		}
 
 		if (*(pos+1) != '\0')
@@ -41,7 +43,7 @@ void _makepath(char *path, const char *device, const char *dir, const char *file
 
 	if ((filename != NULL) && (filename != '\0'))
 	{
-		strcat(path,filename);
+		strkat(path,filename);
 	}
 
 	if ((ext != NULL) && (ext != '\0'))
@@ -49,12 +51,12 @@ void _makepath(char *path, const char *device, const char *dir, const char *file
 
 		if (strrchr(ext,'.') != NULL)
 		{
-			strcat(path,ext);
+			strkat(path,ext);
 		}
 		else
 		{
-			strcat(path,".");
-			strcat(path,ext);
+			strkat(path,".");
+			strkat(path,ext);
 		}
 	}
 

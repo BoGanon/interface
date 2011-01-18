@@ -8,6 +8,8 @@
 #include "hdd.h"
 #include "settings.h"
 
+#include "strkat.h"
+
 static char path[256];
 
 char *browser_get_path()
@@ -17,22 +19,36 @@ char *browser_get_path()
 
 void browser_reset_path(void)
 {
+	char *temp;
 
+	// Get rid of previous directory
+	temp = path + strlen(path);
+
+	while (*temp != '/') temp--;
+	temp++;
+
+	*temp = 0;
+
+	printf("path is %s\n",path);
 	// If path is pfs1, it's a non-home mounted partition
-	if (!strncmp(path,"pfs1",4))
+	//if (!strncmp(path,"pfs1",4))
 	{
-		unmount_partition(1);
+		//unmount_partition(1);
 	}
 
-	path[0] = 0;
+	//path[0] = 0;
 
 }
 
 int browser_list(list_t *list, int buttons)
 {
 
+	char *temp;
+
+	static short history[50];
+
+	static int filled = 0;
 	static int index = 0;
-	static int prev_mnt = 0;
 
 	settings_t settings = settings_get();
 
@@ -60,21 +76,24 @@ int browser_list(list_t *list, int buttons)
 	if(buttons & settings.input.confirm)
 	{
 
-		//printf("entry = %s\n", list.entries[list.selection]);
-		//printf("path = %s\n", path);
+		printf("entry = %s\n", list->entries[list->selection]);
+		printf("path = %s\n", path);
 
 		// Going backwards
 		if (!strcmp(list->entries[list->selection],".."))
 		{
+
+			// Reset current history index
+			history[index] = 0;
 			index--;
 
 			// Shouldn't happen, but just in case
 			if (index <= 0)
 			{
-				// No need to worry about the path
 				index = 0;
 			}
-			else if (index == 1)
+
+			if (index == 1)
 			{
 				// Fix the path based on mounted device
 				if (!strncmp(path,"mc",2))
@@ -89,28 +108,35 @@ int browser_list(list_t *list, int buttons)
 				{
 					strcpy(path,"cdfs");
 				}
-				if (!strncmp(path,"pfs",3))
+				if (!strncmp(path,"pfs1",4))
 				{
-					if (!prev_mnt)
-					{
-						unmount_partition(1);
-					}
-					else
-					{
-						prev_mnt = 0;
-					}
+					unmount_partition(1);
+					strcpy(path,"hdd");
+				}
+				if (!strncmp(path,"pfs0",4))
+				{
 					strcpy(path,"hdd");
 				}
 			}
-			else if (index > 1)
-			{
-				strcpy(path,dirname(path));
 
-				if (index > 2)
-				{
-					strcat(path,"/");
-				}
+			if (index > 1)
+			{
+
+				// Not sure why my dirname implementation isn't working...
+				// Goes along with the strcat() bug
+				temp = path + strlen(path);
+				temp--;
+				temp--;
+
+				while (*temp != '/') temp--;
+				temp++;
+
+				*temp = 0;
+
 			}
+
+			filled = 0;
+
 		}
 		// Going forwards
 		else
@@ -118,47 +144,54 @@ int browser_list(list_t *list, int buttons)
 
 			if (index == 0)
 			{
-				// index == 1 is device mounts list
+				// index == 0 is device mounts list
 				strcpy(path,list->entries[list->selection]);
+				history[index] = 0;
 			}
-			else if (index == 1)
+
+			if (index == 1)
 			{
-				// index == 2 is for mounting devices or any additional handling to get a root directory
+				// index == 1 is for mounting devices or any additional handling to get a root directory
 				if (!strcmp(path,"hdd"))
 				{
-					if (!strcmp(list->entries[list->selection],settings.home.partition))
-					{
-						prev_mnt = 1;
-					}
 					mount_partition(path,list->entries[list->selection],1);
 				}
 				else
 				{
 					strcpy(path,list->entries[list->selection]);
 				}
+				history[index] = 0;
 			}
-			else if (index > 1)
+
+			if (index > 1)
 			{
 				// If the selection is not a directory
 				if (!strchr(list->entries[list->selection],'/'))
 				{
-					//printf("file\n");
-					index = 0;
-					prev_mnt = 0;
+					strkat(path,list->entries[list->selection]);
+					filled = 0;
+					history[index] = list->selection;
 					return 1;
 				}
 				else
 				{
 					// If not then add entry to the path
-					strcat(path,list->entries[list->selection]);
+					printf("selection = %s\n",list->entries[list->selection]);
+					strkat(path,list->entries[list->selection]);
+					history[index] = list->selection;
 				}
 			}
 
+			// Reset selection to 0
+			list->selection = 0;
+			filled = 0;
 			index++;
-		}
 
-		//printf("index = %d\n", index);
-		//printf("path = %s\n", path);
+		}
+	}
+
+	if (!filled)
+	{
 
 		// List the directory, clearing only entries previously used
 		list_clear(list,list->num);
@@ -179,13 +212,16 @@ int browser_list(list_t *list, int buttons)
 		{
 
 			list_path(path,list);
+			printf("num = %d\n", list->num);
 
 			list_sort(list,list->num-1,LIST_NORMAL);
 
 		}
 
-		// Reset selection to 0
-		list->selection = 0;
+		list->selection = history[index];
+
+		// List has been filled
+		filled = 1;
 
 	}
 

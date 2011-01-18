@@ -92,6 +92,7 @@ void video_init_screen(int x, int y, int width, int height, int interlace, int m
 
 	switch (mode)
 	{
+		case GRAPH_MODE_HDTV_1080I:
 		case GRAPH_MODE_NTSC:
 		case GRAPH_MODE_PAL:
 		{
@@ -119,6 +120,7 @@ void video_init_screen(int x, int y, int width, int height, int interlace, int m
 
 	switch (mode)
 	{
+		case GRAPH_MODE_HDTV_1080I:
 		case GRAPH_MODE_NTSC:
 		case GRAPH_MODE_PAL:
 		{

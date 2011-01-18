@@ -9,6 +9,7 @@
 #include "gui.h"
 #include "cfg.h"
 #include "settings.h"
+#include "strkat.h"
 
 static settings_t settings;
 
@@ -47,7 +48,7 @@ void settings_parse(config_t *config)
 
 	/// Home
 	strcpy(section_path,ps2);
-	strcat(section_path,".Home.");
+	strkat(section_path,".Home.");
 
 	sprintf(setting,"%s%s",section_path,"Partition");
 	strcpy(settings.home.partition,  cfg_get_string(setting,""));
@@ -58,7 +59,7 @@ void settings_parse(config_t *config)
 
 	/// Display
 	strcpy(section_path,ps2);
-	strcat(section_path,".Display.");
+	strkat(section_path,".Display.");
 
 	sprintf(setting,"%s%s",section_path,"Mode");
 	settings.display.mode = cfg_string_to_int(cfg_get_string(setting,"0"));
@@ -79,7 +80,7 @@ void settings_parse(config_t *config)
 
 	/// Sound
 	strcpy(section_path,ps2);
-	strcat(section_path,".Sound.");
+	strkat(section_path,".Sound.");
 
 	sprintf(setting,"%s%s",section_path,"Stereo");
 	settings.sound.stereo = cfg_get_bool(setting,1);
@@ -89,7 +90,7 @@ void settings_parse(config_t *config)
 
 	/// Font
 	strcpy(section_path,ps2);
-	strcat(section_path,".Font.");
+	strkat(section_path,".Font.");
 
 	sprintf(setting,"%s%s",section_path,"Height");
 	settings.font.height = cfg_string_to_int(cfg_get_string(setting,"16"));
@@ -108,7 +109,7 @@ void settings_parse(config_t *config)
 
 	/// Input
 	strcpy(section_path,ps2);
-	strcat(section_path,".Input.");
+	strkat(section_path,".Input.");
 
 	sprintf(setting,"%s%s",section_path,"Port");
 	settings.input.port = cfg_string_to_int(cfg_get_string(setting,"0"));
@@ -128,7 +129,7 @@ void settings_parse(config_t *config)
 
 	/// Devices
 	strcpy(section_path,ps2);
-	strcat(section_path,".Devices.");
+	strkat(section_path,".Devices.");
 
 	sprintf(setting,"%s%s",section_path,"Mass");
 	settings.devices.mass = cfg_get_bool(setting,0);

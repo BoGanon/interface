@@ -10,6 +10,7 @@
 #include <SMS_CDVD.h>
 
 #include "lists.h"
+#include "strkat.h"
 
 static char mass = 0;
 static char cdfs = 0;
@@ -78,7 +79,7 @@ entry_t *add_dir_entry(entry_t **p, char *name, short number)
 {
 
 	strcpy(p[number],name);
-	strcat(p[number],"/");
+	strkat(p[number],"/");
 
 	return p[number];
 }

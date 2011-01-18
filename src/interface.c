@@ -18,6 +18,7 @@
 #include "hdd.h"
 #include "init.h"
 #include "settings.h"
+#include "strkat.h"
 #include "gui.h"
 #include "lists.h"
 #include "video.h"
@@ -67,15 +68,32 @@ void interface_draw(int option, list_t *list, fsfont_t *font, int alpha)
 
 	qword_t *q;
 
+
+	vertex_t position;
+	color_t color;
+
+	settings_t settings = settings_get();
+
+	position.x = 15;
+	position.y = 15;
+	position.z = 20;
+
+	color.r = 0xFF;
+	color.g = 0xFF;
+	color.b = 0x00;
+	color.a = 0xFF;
+	color.q = 1.0f;
+
 	q = packet->data;
 
 	q = draw_clear(q,0,0,0,512,512,0x80,0x80,0x80);
+
 
 	// Display background
 
 	if (alpha == 0x80)
 	{
-		//draw_disable_blending();
+		draw_disable_blending();
 	}
 
 	if (gui_background_exists())
@@ -135,6 +153,8 @@ void interface_draw(int option, list_t *list, fsfont_t *font, int alpha)
 		q = gui_foreground(q,alpha);
 	}
 
+	q = fontstudio_print_string(q,0,settings.home.directory,LEFT_ALIGN,&position,&color,font);
+
 	// Append finish token event
 	q = draw_finish(q);
 
@@ -169,8 +189,6 @@ void interface(void)
 	pad = pad_open(settings.input.port,settings.input.slot,MODE_DIGITAL,MODE_UNLOCKED);
 
 	font = gui_font_get();
-
-	list_device_types(list);
 
 	draw_enable_blending();
 
@@ -239,12 +257,16 @@ char *check_memcards(char *file)
 {
 
 	FILE *f;
-
 	static char path[256];
 
-	strcpy(path,"mc0:/SYS-CONF/");
-	strcat(path,file);
+// Use host for ps2link
+#ifndef PS2LINK
+	sprintf(path,"%s/%s","mc0:/SYS-CONF",file);
+#else
+	sprintf(path,"%s/%s","host:",file);
+#endif
 
+#ifndef PS2LINK
 	f = fopen(path,"r");
 
 	if (f != NULL)
@@ -257,6 +279,7 @@ char *check_memcards(char *file)
 	{
 		path[2] = '1';
 	}
+#endif
 
 	f = fopen(path,"r");
 
@@ -306,8 +329,8 @@ void init(char *file)
 {
 
 	int i;
-	int usb = 0;
 	int hdd = 0;
+
 	settings_t settings;
 
 #ifndef PS2LINK
@@ -319,23 +342,14 @@ void init(char *file)
 
 	list_enable_cdfs();
 
+	init_usb_modules(check_memcards("modules.tgz"));
+	list_enable_mass();
+
 	video_init_dmac();
 
-#ifndef PS2LINK
 	settings_init(check_memcards(file));
-#else
-	settings_init("host:settings.cfg");
-#endif
 
 	settings = settings_get();
-
-	// Initialize devices first
-	if (settings.devices.mass)
-	{
-		usb = 1;
-		init_usb_modules(check_memcards("modules.tgz"));
-		list_enable_mass();
-	}
 
 	if (settings.devices.hdd)
 	{
@@ -353,6 +367,7 @@ void init(char *file)
 		{
 			init_dev9_modules(NULL);
 			init_hdd_modules(NULL);
+			list_enable_hdd();
 		}
 
 		for (i = 0; i < 3; i++)
@@ -363,15 +378,6 @@ void init(char *file)
 		if (mount_partition(NULL,settings.home.partition,0) < 0)
 		{
 			strcpy(settings.home.directory,"mc0:/SYS-CONF");
-		}
-
-	}
-	else if (!strncmp(settings.home.directory,"mass",4))
-	{
-
-		if (!usb)
-		{
-			init_usb_modules(check_memcards("modules.tgz"));
 		}
 
 	}
@@ -388,6 +394,8 @@ void interface_open()
 
 	packet = packet_init(10000,PACKET_NORMAL);
 
+	printf("packet = %p\n",packet);
+
 	gui_init(settings.font.height);
 	gui_load_skin(check_home("skin.tgz"));
 
@@ -403,7 +411,14 @@ void interface_open()
 	}
 	else
 	{
-		interlace = GRAPH_DISABLE;
+		if (mode == GRAPH_MODE_HDTV_1080I)
+		{
+			interlace = GRAPH_ENABLE;
+		}
+		else
+		{
+			interlace = GRAPH_DISABLE;
+		}
 	}
 
 	video_init_screen(settings.display.x,settings.display.y,

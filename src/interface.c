@@ -38,7 +38,218 @@
 #define OPTION_START    1
 #define OPTION_SETTINGS 2
 
+static char boot_path[256];
+
 static packet_t *packet;
+
+void parse_args(int argc, char **argv)
+{
+
+	int i;
+
+	if ((argc > 0) && argv[0])
+	{
+
+		printf("boot_path = %s\n",argv[0]);
+		strcpy(boot_path,argv[0]);
+
+		if (!strncmp(argv[0],"mass",4))
+		{
+			if (!strncmp(argv[0],"mass0:\\",7))
+			{
+				boot_path[4] = ':';
+				strcpy(boot_path + 5,argv[0] + 6);
+
+				for(i=0; boot_path[i] != 0; i++)
+				{
+					if(boot_path[i] == '\\')
+					{
+						boot_path[i] = '/';
+					}
+				}
+			}
+		}
+		else if (!strncmp(argv[0],"cd",2))
+		{
+			strcpy(boot_path,"cdfs:/");
+		}
+		else if (!strncmp(argv[0],"hdd",3))
+		{
+			boot_path[0] = 0;
+		}
+#ifndef PS2LINK
+		else if (!strncmp(argv[0],"host",4))
+		{
+			boot_path[0] = 0;
+		}
+#else
+		else if (!strncmp(argv[0],"host",4))
+		{
+			;
+		}
+#endif
+		else if (!strncmp(argv[0],"pfs",3))
+		{
+			boot_path[0] = 0;
+		}
+		else if (!strncmp(argv[0],"mc",2))
+		{
+			;
+		}
+		else
+		{
+			boot_path[0] = 0;
+		}
+	}
+	else
+	{
+		boot_path[0] = 0;
+	}
+
+}
+
+// Check mc0:/SYS-CONF or mc1:/SYS-CONF for file
+// Returns pointer to directory on success
+// Returns NULL on failure
+char *check_boot(char *file)
+{
+
+	FILE *f;
+	static char path[256];
+
+	if (boot_path[0])
+	{
+		sprintf(path,"%s/%s",boot_path,file);
+
+		f = fopen(path,"r");
+
+		if (f != NULL)
+		{
+			fclose(f);
+			printf("Using file %s\n", path);
+			return path;
+		}
+	}
+
+	sprintf(path,"%s/%s","mc0:/SYS-CONF",file);
+
+	f = fopen(path,"r");
+
+	if (f != NULL)
+	{
+		fclose(f);
+		printf("Using file %s\n", path);
+		return path;
+	}
+	else
+	{
+		path[2] = '1';
+	}
+
+	f = fopen(path,"r");
+
+	if (f != NULL)
+	{
+		fclose(f);
+		printf("Using file %s\n", path);
+		return path;
+	}
+	else
+	{
+		printf("Using embedded %s\n", file);
+		return NULL;
+	}
+
+}
+
+char *check_home(char *file)
+{
+
+	FILE *f;
+
+	static char path[256];
+	settings_t settings = settings_get();
+
+	sprintf(path,"%s/%s",settings.home.directory,file);
+
+	printf("path = %s\n", path);
+
+	f = fopen(path,"r");
+
+	if (f != NULL)
+	{
+		printf("Using file %s\n", path);
+		fclose (f);
+		return path;
+	}
+	else
+	{
+		printf("Using embedded %s\n", file);
+		return NULL;
+	}
+
+}
+
+
+
+void init(char *file)
+{
+
+	int i;
+	int hdd = 0;
+
+	settings_t settings;
+
+#ifndef PS2LINK
+	reset_iop();
+#endif
+
+	init_basic_modules(NULL);
+	init_cdvd_modules(NULL);
+
+	list_enable_cdfs();
+
+	init_usb_modules(check_boot("modules.tgz"));
+	list_enable_mass();
+
+	video_init_dmac();
+
+	settings_init(check_boot(file));
+
+	settings = settings_get();
+
+	if (settings.devices.hdd)
+	{
+		hdd = 1;
+		init_dev9_modules(NULL);
+		init_hdd_modules(NULL);
+		list_enable_hdd();
+	}
+
+	// Now try to setup the home directory path
+	if (!strncmp(settings.home.directory,"pfs0",4))
+	{
+
+		if (!hdd)
+		{
+			init_dev9_modules(NULL);
+			init_hdd_modules(NULL);
+			list_enable_hdd();
+		}
+
+		for (i = 0; i < 3; i++)
+		{
+			unmount_partition(i);
+		}
+
+		if (mount_partition(NULL,settings.home.partition,0) < 0)
+		{
+			strcpy(settings.home.directory,"mc0:/SYS-CONF");
+		}
+
+	}
+
+}
 
 void interface_clear_screen()
 {
@@ -167,7 +378,7 @@ void interface_draw(int option, list_t *list, fsfont_t *font, int alpha)
 
 }
 
-void interface(void)
+void interface_run(void)
 {
 
 	unsigned char alpha = 0x00;
@@ -250,139 +461,7 @@ void interface(void)
 
 }
 
-// Check mc0:/SYS-CONF or mc1:/SYS-CONF for file
-// Returns pointer to directory on success
-// Returns NULL on failure
-char *check_memcards(char *file)
-{
 
-	FILE *f;
-	static char path[256];
-
-// Use host for ps2link
-#ifndef PS2LINK
-	sprintf(path,"%s/%s","mc0:/SYS-CONF",file);
-#else
-	sprintf(path,"%s/%s","host:",file);
-#endif
-
-#ifndef PS2LINK
-	f = fopen(path,"r");
-
-	if (f != NULL)
-	{
-		fclose(f);
-		printf("Using file %s\n", path);
-		return path;
-	}
-	else
-	{
-		path[2] = '1';
-	}
-#endif
-
-	f = fopen(path,"r");
-
-	if (f != NULL)
-	{
-		fclose(f);
-		printf("Using file %s\n", path);
-		return path;
-	}
-	else
-	{
-		printf("Using embedded %s\n", file);
-		return NULL;
-	}
-
-}
-
-char *check_home(char *file)
-{
-
-	FILE *f;
-
-	static char path[256];
-	settings_t settings = settings_get();
-
-	sprintf(path,"%s/%s",settings.home.directory,file);
-
-	printf("path = %s\n", path);
-
-	f = fopen(path,"r");
-
-	if (f != NULL)
-	{
-		printf("Using file %s\n", path);
-		fclose (f);
-		return path;
-	}
-	else
-	{
-		printf("Using embedded %s\n", file);
-		return NULL;
-	}
-
-}
-
-void init(char *file)
-{
-
-	int i;
-	int hdd = 0;
-
-	settings_t settings;
-
-#ifndef PS2LINK
-	reset_iop();
-#endif
-
-	init_basic_modules(NULL);
-	init_cdvd_modules(NULL);
-
-	list_enable_cdfs();
-
-	init_usb_modules(check_memcards("modules.tgz"));
-	list_enable_mass();
-
-	video_init_dmac();
-
-	settings_init(check_memcards(file));
-
-	settings = settings_get();
-
-	if (settings.devices.hdd)
-	{
-		hdd = 1;
-		init_dev9_modules(NULL);
-		init_hdd_modules(NULL);
-		list_enable_hdd();
-	}
-
-	// Now try to setup the home directory path
-	if (!strncmp(settings.home.directory,"pfs0",4))
-	{
-
-		if (!hdd)
-		{
-			init_dev9_modules(NULL);
-			init_hdd_modules(NULL);
-			list_enable_hdd();
-		}
-
-		for (i = 0; i < 3; i++)
-		{
-			unmount_partition(i);
-		}
-
-		if (mount_partition(NULL,settings.home.partition,0) < 0)
-		{
-			strcpy(settings.home.directory,"mc0:/SYS-CONF");
-		}
-
-	}
-
-}
 
 void interface_open()
 {

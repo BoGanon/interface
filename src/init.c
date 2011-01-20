@@ -469,6 +469,7 @@ void init_cdvd_modules(const char *path)
 
 	gz = init_modules_tgz(path,&gz_size);
 
+	//init_load_erom();
 	init_load_irx(gz, gz_size, cdvd_modules, 2);
 
 	if (gz != (char*)modules_tgz)

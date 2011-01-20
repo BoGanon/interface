@@ -401,7 +401,7 @@ void list_partitions(list_t *list)
 			if(!strcmp(hddEnt.name+len-4, ".PCB"))
 				continue;
 		}
-
+/*
 		if(!strncmp(hddEnt.name, "__", 2))
 		{
 			if(strcmp(hddEnt.name, "__boot"))
@@ -415,7 +415,7 @@ void list_partitions(list_t *list)
 			if(strcmp(hddEnt.name, "__common"))
 				continue;
 		}
-
+*/
 		add_reg_entry(list->entries,hddEnt.name, n++);
 	}
 

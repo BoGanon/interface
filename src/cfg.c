@@ -2,6 +2,13 @@
 
 #include "cfg.h"
 
+#define PRINT_SETTING printf("%s ",setting)
+
+#define PRINT_NOT_FOUND printf("not_found")
+
+#define PRINT_VALUE_NUM printf("\nvalue = %d\n",value)
+#define PRINT_VALUE_STR printf("\nvalue = %s\n",value)
+
 config_t *cfg_open(const char *path)
 {
 
@@ -93,100 +100,138 @@ long cfg_string_to_int(const char *in)
 
 unsigned char config_get_bool(config_t *config, char *setting, unsigned char initial)
 {
+	unsigned char value = 0;
 	config_setting_t *config_setting = config_lookup(config,setting);
+
+	PRINT_SETTING;
 
 	if (config_setting == NULL)
 	{
-		return initial;
+		PRINT_NOT_FOUND;
+		value = initial;
 	}
 	else
 	{
-		return (unsigned char)config_setting_get_bool(config_setting);
+		value = config_setting_get_bool(config_setting);
 	}
+
+	PRINT_VALUE_NUM;
+
+	return value;
 }
 
 unsigned int config_get_uint(config_t *config, char *setting, unsigned int initial)
 {
+	unsigned int value = 0;
 	config_setting_t *config_setting = config_lookup(config,setting);
+
+	PRINT_SETTING;
 
 	if (config_setting == NULL)
 	{
-		return initial;
+		PRINT_NOT_FOUND;
+		value = initial;
 	}
 	else
 	{
-		return (unsigned)config_setting_get_int(config_setting);
+		value = config_setting_get_int(config_setting);
 	}
+
+	PRINT_VALUE_NUM;
+
+	return value;
 }
 
 int config_get_int(config_t *config, char *setting, int initial)
 {
+	int value = 0;
 	config_setting_t *config_setting = config_lookup(config,setting);
 
+	PRINT_SETTING;
 	if (config_setting == NULL)
 	{
-		return initial;
+		PRINT_NOT_FOUND;
+		value = initial;
 	}
 	else
 	{
-		return config_setting_get_int(config_setting);
+		value = config_setting_get_int(config_setting);
 	}
+
+	PRINT_VALUE_NUM;
+
+	return value;
 }
 
 int config_get_int_elem(config_t *config, char *setting, int element, int initial)
 {
+	int value = 0;
 	config_setting_t *config_setting = config_lookup(config,setting);
 
+	PRINT_SETTING;
 	if (config_setting == NULL)
 	{
-		return initial;
+		PRINT_NOT_FOUND;
+		value = initial;
 	}
 	else
 	{
-		return config_setting_get_int_elem(config_setting,element);
+		value = config_setting_get_int_elem(config_setting,element);
 	}
+
+	PRINT_VALUE_NUM;
+
+	return value;
 }
 
-const char *config_get_string(config_t *config, char *setting, char *initial)
+const char *config_get_string(config_t *config, char *setting, const char *initial)
 {
-	const char *value;
+	const char *value = NULL;
 	config_setting_t *config_setting = config_lookup(config,setting);
+
+	PRINT_SETTING;
 
 	if (config_setting == NULL)
 	{
-		return initial;
+		PRINT_NOT_FOUND;
+		value = initial;
 	}
 	else
 	{
 		if ((value = config_setting_get_string(config_setting)) == NULL)
 		{
-			return initial;
-		}
-		else
-		{
-			return value;
+			PRINT_NOT_FOUND;
+			value = initial;
 		}
 	}
+
+	PRINT_VALUE_STR;
+
+	return value;
 }
 
-const char *config_get_string_elem(config_t *config, char *setting, int element, char *initial)
+const char *config_get_string_elem(config_t *config, char *setting, int element, const char *initial)
 {
 	const char *value;
 	config_setting_t *config_setting = config_lookup(config,setting);
 
+	PRINT_SETTING;
 	if (config_setting == NULL)
 	{
-		return initial;
+		PRINT_NOT_FOUND;
+		value = initial;
 	}
 	else
 	{
 		if ((value = config_setting_get_string_elem(config_setting,element)) == NULL)
 		{
-			return initial;
-		}
-		else
-		{
-			return value;
+			PRINT_NOT_FOUND;
+			value = initial;
 		}
 	}
+
+	PRINT_VALUE_STR;
+
+	return value;
+
 }

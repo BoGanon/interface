@@ -72,10 +72,10 @@ void settings_parse(config_t *config)
 	sprintf(setting,"%s%s",section_path,"Interlace");
 	settings.display.interlace = cfg_get_bool(setting,0);
 
-	sprintf(setting,"%s%s",section_path,"Offset.X");
+	sprintf(setting,"%s%s",section_path,"OffsetX");
 	settings.display.x = cfg_string_to_int(cfg_get_string(setting,"0"));
 
-	sprintf(setting,"%s%s",section_path,"Offset.Y");
+	sprintf(setting,"%s%s",section_path,"OffsetY");
 	settings.display.y = cfg_string_to_int(cfg_get_string(setting,"0"));
 
 	/// Sound

@@ -23,8 +23,8 @@ extern "C" {
 	unsigned int config_get_uint(config_t *config, char *setting, unsigned int initial);
 	int config_get_int(config_t *config, char *setting, int initial);
 	int config_get_int_elem(config_t *config, char *setting, int element, int initial);
-	const char *config_get_string(config_t *config, char *setting, char *initial);
-	const char *config_get_string_elem(config_t *config, char *setting, int element, char *initial);
+	const char *config_get_string(config_t *config, char *setting, const char *initial);
+	const char *config_get_string_elem(config_t *config, char *setting, int element, const char *initial);
 
 	void cfg_int_to_string(char *out, int in);
 	long cfg_string_to_int(const char *in);

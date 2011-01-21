@@ -46,11 +46,12 @@ void parse_args(int argc, char **argv)
 {
 
 	int i;
+	char *temp;
 
 	if ((argc > 0) && argv[0])
 	{
 
-		printf("boot_path = %s\n",argv[0]);
+		printf("argv[0] = %s\n",argv[0]);
 		strcpy(boot_path,argv[0]);
 
 		if (!strncmp(argv[0],"mass",4))
@@ -104,6 +105,19 @@ void parse_args(int argc, char **argv)
 	else
 	{
 		boot_path[0] = 0;
+	}
+
+	if ((temp = strstr(boot_path,".elf")))
+	{
+		while (*temp != '/') temp--;
+		*temp = 0;
+		printf("boot_path is now %s\n",boot_path);
+	}
+	else if ((temp = strstr(boot_path,".ELF")))
+	{
+		while (*temp != '/') temp--;
+		*temp = 0;
+		printf("boot_path is now %s\n",boot_path);
 	}
 
 }
